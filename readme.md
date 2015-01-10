@@ -1,5 +1,5 @@
 # pyACH
-A library for creating NACHA payment files with Python 3. These are used to do wire transfers.   
+A library for creating [NACHA](https://www.nacha.org/rules) payment files with Python 3. [These are used to do wire transfers](https://en.wikipedia.org/wiki/NACHA).   
 The other two libraries I've found to do this either weren't implemented correctly, or didn't allow for the same level of granularity that this library does. This allows you to group paments by batch if you have multiple clients that all use the same originating financial institution (bank).     
 I chose to use a more object oriented approach than that of the other Python ACH library I found because you are creating an ACH object. Also, I wanted to learn more object oriented Python.  
 So far I've only tested it with WEB records, but I plan on testing it with all types at some point. 
