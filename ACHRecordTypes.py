@@ -2,10 +2,10 @@ __author__ = 'Morgan Thrapp'
 
 import datetime
 
-todayWithFormat = datetime.date.today().strftime('%y%m%d')
-nowWithFormat = datetime.datetime.now().time().strftime('%H%M')
+today_with_format = datetime.date.today().strftime('%y%m%d')
+now_with_format = datetime.datetime.now().time().strftime('%H%M')
 yesterday = datetime.datetime.now() - datetime.timedelta(1)
-yesterdayWithFormat = yesterday.strftime('%y%m%d')
+yesterday_with_format = yesterday.strftime('%y%m%d')
 
 
 # Service class codes:
@@ -43,231 +43,231 @@ RECURRING = 'R'
 
 
 class FileHeader:
-    _recordType = '1'  # ACH Header records are type 1
-    _priorityCode = '01'  # 01 is the only code supported by NACHA
-    _recordSize = '094'
-    _blockingFactor = '10'
-    _formatCode = '1'
+    _record_type = '1'  # ACH Header records are type 1
+    _priority_code = '01'  # 01 is the only code supported by NACHA
+    _record_size = '094'
+    _blocking_factor = '10'
+    _format_code = '1'
 
     def __init__(self, destination_routing_number, company_identification_number, destination_name, origin_name,
                  reference_code):
-        self._destinationRoutingNumber = str(destination_routing_number).ljust(10)
-        self._companyIdentificationNumber = str(company_identification_number).ljust(10)
-        self._destinationName = str(destination_name).ljust(23)
-        self._originName = str(origin_name).ljust(23)
-        self._referenceCode = str(reference_code).ljust(8)
-        self._creationDate = todayWithFormat
-        self._creationTime = nowWithFormat
-        self._fileIDModifier = 'A'  # First file of the day should have A. Subsequent files follow pattern A-Z/1-9
-        self.fileHeaderRecord = ''
+        self._destination_routing_number = str(destination_routing_number).ljust(10)
+        self._company_identification_number = str(company_identification_number).ljust(10)
+        self._destination_name = str(destination_name).ljust(23)
+        self._origin_name = str(origin_name).ljust(23)
+        self._reference_code = str(reference_code).ljust(8)
+        self._creation_date = today_with_format
+        self._creation_time = now_with_format
+        self._file_id_modifier = 'A'  # First file of the day should have A. Subsequent files follow pattern A-Z/1-9
+        self.file_header_record = ''
 
     def generate(self):
-        self.fileHeaderRecord += self._recordType
-        self.fileHeaderRecord += self._priorityCode
-        self.fileHeaderRecord += self._destinationRoutingNumber
-        self.fileHeaderRecord += self._companyIdentificationNumber
-        self.fileHeaderRecord += self._creationDate
-        self.fileHeaderRecord += self._creationTime
-        self.fileHeaderRecord += self._fileIDModifier
-        self.fileHeaderRecord += self._recordSize
-        self.fileHeaderRecord += self._blockingFactor
-        self.fileHeaderRecord += self._formatCode
-        self.fileHeaderRecord += self._destinationName
-        self.fileHeaderRecord += self._originName
-        self.fileHeaderRecord += self._referenceCode
-        self.fileHeaderRecord += '\n'
-        self._fileIDModifier = chr(ord(self._fileIDModifier) + 1)
-        return self.fileHeaderRecord
+        self.file_header_record += self._record_type
+        self.file_header_record += self._priority_code
+        self.file_header_record += self._destination_routing_number
+        self.file_header_record += self._company_identification_number
+        self.file_header_record += self._creation_date
+        self.file_header_record += self._creation_time
+        self.file_header_record += self._file_id_modifier
+        self.file_header_record += self._record_size
+        self.file_header_record += self._blocking_factor
+        self.file_header_record += self._format_code
+        self.file_header_record += self._destination_name
+        self.file_header_record += self._origin_name
+        self.file_header_record += self._reference_code
+        self.file_header_record += '\n'
+        self._file_id_modifier = chr(ord(self._file_id_modifier) + 1)
+        return self.file_header_record
 
 
 class FileControl:
-    _recordType = '9'  # ACH File Control records are type 9
+    _record_type = '9'  # ACH File Control records are type 9
     __reserved = ''.ljust(39)  # DO NOT MODIFY THIS. It needs to be blank.
 
     def __init__(self, batch_count, block_count, entry_count, entry_hash,
                  total_debt_amount, total_credit_amount):
-        self._batchCount = str(batch_count).rjust(6, '0')
-        self._blockCount = str(block_count).rjust(6, '0')
-        self._entryCount = str(entry_count).rjust(8, '0')
-        self._entryHash = str(entry_hash).ljust(10)
-        self._totalDebitAmount = str(total_debt_amount).rjust(12, '0')
-        self._totalCreditAmount = str(total_credit_amount).rjust(12, '0')
-        self.fileControlRecord = ''
+        self._batch_count = str(batch_count).rjust(6, '0')
+        self._block_count = str(block_count).rjust(6, '0')
+        self._entry_count = str(entry_count).rjust(8, '0')
+        self._entry_hash = str(entry_hash).ljust(10)
+        self._total_debit_amount = str(total_debt_amount).rjust(12, '0')
+        self._total_credit_amount = str(total_credit_amount).rjust(12, '0')
+        self.file_control_record = ''
 
     def generate(self):
-        self.fileControlRecord += self._recordType
-        self.fileControlRecord += self._batchCount
-        self.fileControlRecord += self._blockCount
-        self.fileControlRecord += self._entryCount
-        self.fileControlRecord += self._entryHash
-        self.fileControlRecord += self._totalDebitAmount
-        self.fileControlRecord += self._totalCreditAmount
-        self.fileControlRecord += self.__reserved
-        return self.fileControlRecord
+        self.file_control_record += self._record_type
+        self.file_control_record += self._batch_count
+        self.file_control_record += self._block_count
+        self.file_control_record += self._entry_count
+        self.file_control_record += self._entry_hash
+        self.file_control_record += self._total_debit_amount
+        self.file_control_record += self._total_credit_amount
+        self.file_control_record += self.__reserved
+        return self.file_control_record
 
 
 class Batch:
     def __init__(self, company_identification_number, dfi_number, service_class):
-        self._companyIdentificationNumber = company_identification_number
-        self._originatorDFIIdentification = dfi_number
-        self._serviceClass = service_class
-        self._companyName = ''
-        self._batchHeader = ''
-        self._totalDebitAmount = 0
-        self._totalCreditAmount = 0
-        self._entryHash = 0
-        self._entryCount = 0
-        self.entryRecords = []
+        self._company_identification_number = company_identification_number
+        self._originator_dfi_identification = dfi_number
+        self._service_class = service_class
+        self._company_name = ''
+        self._batch_header = ''
+        self._total_debit_amount = 0
+        self._total_credit_amount = 0
+        self._entry_hash = 0
+        self._entry_count = 0
+        self.entry_records = []
 
     def add_entry(self, transaction_code, routing_number, account_number, amount, identification_number, receiver_name,
                   discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number, amount,
-                       identification_number, receiver_name, discretionary_data, self._originatorDFIIdentification)
-        self.entryRecords.append(_entry)
+                       identification_number, receiver_name, discretionary_data, self._originator_dfi_identification)
+        self.entry_records.append(_entry)
 
     def finalize(self, company_name, discretionary_data, entry_class_code,
                  entry_description, batch_number,
-                 service_class=MIXED, description_date=todayWithFormat, effective_entry_date=todayWithFormat):
-        self._batchHeader = BatchHeader(company_name, discretionary_data, self._companyIdentificationNumber,
-                                        entry_class_code, entry_description, self._originatorDFIIdentification,
-                                        batch_number, service_class,
-                                        description_date, effective_entry_date)
-        for entry in self.entryRecords:
-            self._batchHeader.entryRecords.append(entry)
-        self._batchHeader.finalize()
-        self._totalDebitAmount = self._batchHeader._totalDebitAmount
-        self._totalCreditAmount = self._batchHeader._totalCreditAmount
-        self._entryHash = self._batchHeader._entryHash
-        self._entryCount = self._batchHeader._entryCount
+                 service_class=MIXED, description_date=today_with_format, effective_entry_date=today_with_format):
+        self._batch_header = BatchHeader(company_name, discretionary_data, self._company_identification_number,
+                                         entry_class_code, entry_description, self._originator_dfi_identification,
+                                         batch_number, service_class,
+                                         description_date, effective_entry_date)
+        for entry in self.entry_records:
+            self._batch_header.entry_records.append(entry)
+        self._batch_header.finalize()
+        self._total_debit_amount = self._batch_header._total_debit_amount
+        self._total_credit_amount = self._batch_header._total_credit_amount
+        self._entry_hash = self._batch_header._entry_hash
+        self._entry_count = self._batch_header._entry_count
 
 
 class BatchHeader:
-    _recordType = '5'  # ACH Batch Header records are type 5
+    _record_type = '5'  # ACH Batch Header records are type 5
     __reserved = ''.ljust(3)  # DO NOT MODIFY THIS. It is auto generated by the receiving bank.
-    _originatorStatusCode = '1'
+    _originator_status_code = '1'
 
     def __init__(self, company_name, discretionary_data, company_identification_number,
-                 entry_class_code, entry_description, dfi_number, batch_number, trace_number,
-                 service_class=MIXED, description_date=todayWithFormat, effective_entry_date=todayWithFormat):
-        self._companyName = str(company_name).ljust(16)
-        self._discretionaryData = str(discretionary_data).ljust(20)
-        self._companyIdentificationNumber = str(company_identification_number).ljust(10)
-        self._entryClassCode = str(entry_class_code).ljust(3)
-        self._serviceClass = str(service_class).ljust(3)
-        self._entryDescription = str(entry_description).ljust(10)
-        self._descriptiveDate = str(description_date).ljust(6)
-        self._effectiveEntryDate = str(effective_entry_date).ljust(6)
-        self._originatorDFIIdentification = str(dfi_number).ljust(8)
-        self._batchNumber = str(batch_number).ljust(7)
-        self._batchControlRecord = ''
-        self.entryRecords = []
-        self._entryCount = len(self.entryRecords)
-        self._totalDebitAmount = 0
-        self._totalCreditAmount = 0
-        self._entryHash = 0
-        self.batchHeaderRecord = ''
+                 entry_class_code, entry_description, dfi_number, batch_number,
+                 service_class=MIXED, description_date=today_with_format, effective_entry_date=today_with_format):
+        self._company_name = str(company_name).ljust(16)
+        self._discretionary_data = str(discretionary_data).ljust(20)
+        self._company_identification_number = str(company_identification_number).ljust(10)
+        self._entry_class_code = str(entry_class_code).ljust(3)
+        self._service_class = str(service_class).ljust(3)
+        self._entry_description = str(entry_description).ljust(10)
+        self._descriptive_date = str(description_date).ljust(6)
+        self._effective_entry_date = str(effective_entry_date).ljust(6)
+        self._originator_dfi_identification = str(dfi_number).ljust(8)
+        self._batch_number = str(batch_number).ljust(7)
+        self._batch_control_record = ''
+        self.entry_records = []
+        self._entry_count = len(self.entry_records)
+        self._total_debit_amount = 0
+        self._total_credit_amount = 0
+        self._entry_hash = 0
+        self.batch_header_record = ''
 
     def generate(self):
-        self.batchHeaderRecord += self._recordType[:1]
-        self.batchHeaderRecord += self._serviceClass[:3]
-        self.batchHeaderRecord += self._companyName[:16]
-        self.batchHeaderRecord += self._discretionaryData[:20]
-        self.batchHeaderRecord += self._companyIdentificationNumber[:10]
-        self.batchHeaderRecord += self._entryClassCode[:3]
-        self.batchHeaderRecord += self._entryDescription[:10]
-        self.batchHeaderRecord += self._descriptiveDate[:6]
-        self.batchHeaderRecord += self._effectiveEntryDate[:6]
-        self.batchHeaderRecord += self.__reserved[:3]
-        self.batchHeaderRecord += self._originatorStatusCode[:1]
-        self.batchHeaderRecord += self._originatorDFIIdentification[:8]
-        self.batchHeaderRecord += self._batchNumber[:7]
-        self.batchHeaderRecord += '\n'
-        return self.batchHeaderRecord
+        self.batch_header_record += self._record_type[:1]
+        self.batch_header_record += self._service_class[:3]
+        self.batch_header_record += self._company_name[:16]
+        self.batch_header_record += self._discretionary_data[:20]
+        self.batch_header_record += self._company_identification_number[:10]
+        self.batch_header_record += self._entry_class_code[:3]
+        self.batch_header_record += self._entry_description[:10]
+        self.batch_header_record += self._descriptive_date[:6]
+        self.batch_header_record += self._effective_entry_date[:6]
+        self.batch_header_record += self.__reserved[:3]
+        self.batch_header_record += self._originator_status_code[:1]
+        self.batch_header_record += self._originator_dfi_identification[:8]
+        self.batch_header_record += self._batch_number[:7]
+        self.batch_header_record += '\n'
+        return self.batch_header_record
 
     def finalize(self):
-        self._entryCount = len(self.entryRecords)
+        self._entry_count = len(self.entry_records)
         entry_hash = 0
-        for entry in self.entryRecords:
+        for entry in self.entry_records:
             entry.finalize()
-            self._entryCount += 1
-            if entry._transactionCode in (CHECK_DEBIT, SAVINGS_DEBIT):
-                self._totalDebitAmount += float(entry._amount)
-            elif entry._transactionCode in (CHECK_DEPOSIT, SAVINGS_DEPOSIT):
-                self._totalCreditAmount += float(entry._amount)
-            entry_hash += int(entry._routingNumber)
-        self._entryHash = str(entry_hash)[-10:]
-        self._batchControlRecord = BatchControl(self._entryCount, self._entryHash, self._totalDebitAmount,
-                                                self._totalCreditAmount, self._companyName,
-                                                self._originatorDFIIdentification, self._batchNumber,
-                                                self._serviceClass).generate()
+            self._entry_count += 1
+            if entry._transaction_code in (CHECK_DEBIT, SAVINGS_DEBIT):
+                self._total_debit_amount += float(entry._amount)
+            elif entry._transaction_code in (CHECK_DEPOSIT, SAVINGS_DEPOSIT):
+                self._total_credit_amount += float(entry._amount)
+            entry_hash += int(entry._routing_number)
+        self._entry_hash = str(entry_hash)[-10:]
+        self._batch_control_record = BatchControl(self._entry_count, self._entry_hash, self._total_debit_amount,
+                                                  self._total_credit_amount, self._company_name,
+                                                  self._originator_dfi_identification, self._batch_number,
+                                                  self._service_class).generate()
 
     def add_entry(self, transaction_code, routing_number, account_number, amount, identification_number, receiver_name,
                   discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number, amount,
-                       identification_number, receiver_name, discretionary_data, self._originatorDFIIdentification)
-        self.entryRecords.append(_entry)
+                       identification_number, receiver_name, discretionary_data, self._originator_dfi_identification)
+        self.entry_records.append(_entry)
 
 
 class BatchControl:
-    _recordType = '8'  # ACH Batch Control records are type 8
-    __authenticationCode = ''.ljust(19)  # DO NOT MODIFY THIS. It needs to be blank.
+    _record_type = '8'  # ACH Batch Control records are type 8
+    __authentication_code = ''.ljust(19)  # DO NOT MODIFY THIS. It needs to be blank.
     __reserved = ''.ljust(6)  # DO NOT MODIFY THIS. It needs to be blank.
 
     def __init__(self, entry_count, entry_hash, total_debt_amount, total_credit_amount,
                  company_identification_number, dfi_number, batch_number, service_class=MIXED):
-        self._serviceClass = str(service_class).ljust(3)
-        self._entryCount = str(entry_count).rjust(6, '0')
-        self.entryHash = str(entry_hash).ljust(10)
-        self._totalDebitAmount = str(total_debt_amount).rjust(12, '0')
-        self._totalCreditAmount = str(total_credit_amount).rjust(12, '0')
-        self._companyIdentificationNumber = str(company_identification_number).ljust(10)
-        self._originatorDFIIdentification = str(dfi_number).ljust(8)
-        self._batchNumber = str(batch_number).rjust(7)
-        self.batchControlRecord = ''
+        self._service_class = str(service_class).ljust(3)
+        self._entry_count = str(entry_count).rjust(6, '0')
+        self.entry_hash = str(entry_hash).ljust(10)
+        self._total_debit_amount = str(total_debt_amount).rjust(12, '0')
+        self._total_credit_amount = str(total_credit_amount).rjust(12, '0')
+        self._company_identification_number = str(company_identification_number).ljust(10)
+        self._originator_dfi_identification = str(dfi_number).ljust(8)
+        self._batch_number = str(batch_number).rjust(7)
+        self.batch_control_record = ''
 
     def generate(self):
-        self.batchControlRecord += self._recordType[:1]
-        self.batchControlRecord += self._serviceClass[:3]
-        self.batchControlRecord += self._entryCount[:6]
-        self.batchControlRecord += self.entryHash[:10]
-        self.batchControlRecord += self._totalDebitAmount[:12]
-        self.batchControlRecord += self._totalCreditAmount[:12]
-        self.batchControlRecord += self._companyIdentificationNumber[:10]
-        self.batchControlRecord += self.__authenticationCode[:19]
-        self.batchControlRecord += self.__reserved[:6]
-        self.batchControlRecord += self._originatorDFIIdentification[:8]
-        self.batchControlRecord += self._batchNumber[:7]
-        self.batchControlRecord += '\n'
-        return self.batchControlRecord[:95]
+        self.batch_control_record += self._record_type[:1]
+        self.batch_control_record += self._service_class[:3]
+        self.batch_control_record += self._entry_count[:6]
+        self.batch_control_record += self.entry_hash[:10]
+        self.batch_control_record += self._total_debit_amount[:12]
+        self.batch_control_record += self._total_credit_amount[:12]
+        self.batch_control_record += self._company_identification_number[:10]
+        self.batch_control_record += self.__authentication_code[:19]
+        self.batch_control_record += self.__reserved[:6]
+        self.batch_control_record += self._originator_dfi_identification[:8]
+        self.batch_control_record += self._batch_number[:7]
+        self.batch_control_record += '\n'
+        return self.batch_control_record[:95]
 
 
 class Entry:
-    _entryNumber = 0
+    _entry_number = 0
     # The following values are printed:
-    _recordType = '6'  # Entry Detail record type is 6.
+    _record_type = '6'  # Entry Detail record type is 6.
 
     def __init__(self, transaction_code, routing_number, account_number,
                  amount, identification_number, receiver_name, discretionary_data, trace_number):
-        self._transactionCode = str(transaction_code).ljust(2)
-        self._routingNumber = str(routing_number).ljust(8)
-        self._accountNumber = str(account_number).ljust(17)
+        self._transaction_code = str(transaction_code).ljust(2)
+        self._routing_number = str(routing_number).ljust(8)
+        self._account_number = str(account_number).ljust(17)
         self._amount = str(amount).rjust(10, '0')
-        self._identificationNumber = str(identification_number).ljust(15)
-        self._receiverName = str(receiver_name).ljust(22)
-        self._discretionaryData = str(discretionary_data).ljust(2)
-        self._traceNumber = str(trace_number).ljust(15)
-        self._addendaCount = 0
-        self.entryRecord = ''
-        self.addendaRecords = []
-        self._hasAddenda = '0'
-        self._entryNumber += 1
+        self._identification_number = str(identification_number).ljust(15)
+        self._receiver_name = str(receiver_name).ljust(22)
+        self._discretionary_data = str(discretionary_data).ljust(2)
+        self._trace_number = str(trace_number).ljust(15)
+        self._addenda_count = 0
+        self.entry_record = ''
+        self.addenda_records = []
+        self._has_addenda = '0'
+        self._entry_number += 1
 
-    def _trace_number(self):
-        trace_number = self._traceNumber + str(self._entryNumber).ljust(7, '0')
+    def _get_trace_number(self):
+        trace_number = self._trace_number + str(self._entry_number).ljust(7, '0')
         return trace_number
 
     def _check_digit(self):
-        routing_number_list = list(self._routingNumber)
+        routing_number_list = list(self._routing_number)
         routing_number_sum = 0
         routing_number_sum += (int(routing_number_list[0]) * 3)
         routing_number_sum += (int(routing_number_list[1]) * 7)
@@ -281,136 +281,136 @@ class Entry:
         return str(check_digit)
 
     def generate(self):
-        self.entryRecord += self._recordType[:1]
-        self.entryRecord += self._transactionCode[:2]
-        self.entryRecord += self._routingNumber[:8]
-        self.entryRecord += self._check_digit()[:1]
-        self.entryRecord += self._accountNumber[:17]
-        self.entryRecord += self._amount[:10]
-        self.entryRecord += self._identificationNumber[:15]
-        self.entryRecord += self._receiverName[:22]
-        self.entryRecord += self._discretionaryData[:2]
-        self.entryRecord += self._hasAddenda[:1]
-        self.entryRecord += self._trace_number()[:15]
-        self.entryRecord += '\n'
-        return self.entryRecord[:95]
+        self.entry_record += self._record_type[:1]
+        self.entry_record += self._transaction_code[:2]
+        self.entry_record += self._routing_number[:8]
+        self.entry_record += self._check_digit()[:1]
+        self.entry_record += self._account_number[:17]
+        self.entry_record += self._amount[:10]
+        self.entry_record += self._identification_number[:15]
+        self.entry_record += self._receiver_name[:22]
+        self.entry_record += self._discretionary_data[:2]
+        self.entry_record += self._has_addenda[:1]
+        self.entry_record += self._get_trace_number()[:15]
+        self.entry_record += '\n'
+        return self.entry_record[:95]
 
     def finalize(self):
-        self._addendaCount = len(self.addendaRecords)
+        self._addenda_count = len(self.addenda_records)
 
     def add_addenda(self, main_detail, type_code):
-        _entryRecordID = str(self._traceNumber)
-        _addendaRecord = Addenda(main_detail, type_code, _entryRecordID)
-        self.addendaRecords.append(_addendaRecord)
-        self._hasAddenda = '1'
+        _entry_record_id = str(self._trace_number)
+        _addenda_record = Addenda(main_detail, type_code, _entry_record_id)
+        self.addenda_records.append(_addenda_record)
+        self._has_addenda = '1'
 
 
 class Addenda:
-    _recordType = '7'  # Addenda records are type 7
+    _record_type = '7'  # Addenda records are type 7
 
     def __init__(self, main_detail, type_code, entry_record_id):
-        self._mainDetail = str(main_detail).ljust(80)
-        self._typeCode = str(type_code).ljust(2)
-        self._entryRecordID = str(entry_record_id).ljust(7)
-        self._addendaSequence = 1
-        self.addendaRecord = ''
+        self._main_detail = str(main_detail).ljust(80)
+        self._type_code = str(type_code).ljust(2)
+        self._entry_record_id = str(entry_record_id).ljust(7)
+        self._addenda_sequence = 1
+        self.addenda_record = ''
 
     def generate(self):
-        self.addendaRecord += self._recordType[:1]
-        self.addendaRecord += self._typeCode[:2]
-        self.addendaRecord += self._mainDetail[:80]
-        self.addendaRecord += str(self._addendaSequence).ljust(4)[:4]
-        self.addendaRecord += self._entryRecordID[:7]
-        self.addendaRecord += '\n'
-        self._addendaSequence += 1
-        return self.addendaRecord
+        self.addenda_record += self._record_type[:1]
+        self.addenda_record += self._type_code[:2]
+        self.addenda_record += self._main_detail[:80]
+        self.addenda_record += str(self._addenda_sequence).ljust(4)[:4]
+        self.addenda_record += self._entry_record_id[:7]
+        self.addenda_record += '\n'
+        self._addenda_sequence += 1
+        return self.addenda_record
 
 
 class ACHFile(object):
     def __init__(self):
-        self._batchCount = 0
-        self._batchNumber = 0
-        self._blockCount = 0
-        self._entryCount = 0
-        self._entryAddendaCount = 0
-        self._entryHash = ''
-        self._totalDebitAmount = 0
-        self._totalCreditAmount = 0
-        self._entryDate = todayWithFormat
-        self._fileHeader = ''
-        self._fileControlRecord = ''
-        self.batchRecords = []
-        self.destinationName = ''
-        self.originName = ''
-        self.referenceCode = ''
-        self.batchName = ''
-        self.headerDiscretionaryData = ''
-        self.entryClassCode = ''
-        self.entryDescription = ''
-        self.descriptiveDate = todayWithFormat
-        self.destinationRoutingNumber = ''
-        self.companyIdentificationNumber = ''
-        self.footerLines = 0
-        self.originID = ''
+        self._batch_count = 0
+        self._batch_number = 0
+        self._block_count = 0
+        self._entry_count = 0
+        self._entry_addenda_count = 0
+        self._entry_hash = ''
+        self._total_debit_amount = 0
+        self._total_credit_amount = 0
+        self._entry_date = today_with_format
+        self._file_header = ''
+        self._file_control_record = ''
+        self.batch_records = []
+        self.destination_name = ''
+        self.origin_name = ''
+        self.reference_code = ''
+        self.batch_name = ''
+        self.header_discretionary_data = ''
+        self.entry_class_code = ''
+        self.entry_description = ''
+        self.descriptive_date = today_with_format
+        self.destination_routing_number = ''
+        self.company_identification_number = ''
+        self.footer_lines = 0
+        self.origin_id = ''
 
     def create_header(self):
-        self._fileHeader = FileHeader(self.destinationRoutingNumber, self.originID,
-                                      self.destinationName, self.originName, self.referenceCode)
+        self._file_header = FileHeader(self.destination_routing_number, self.origin_id,
+                                       self.destination_name, self.origin_name, self.reference_code)
 
     def new_batch(self, dfi_number, entry_description=None,
                   batch_name=None, company_identification_number=None,
                   entry_class_code=None, discretionary_data='', service_class=MIXED):
         if entry_description is None:
-            entry_description = self.entryDescription
+            entry_description = self.entry_description
         if batch_name is None:
-            batch_name = self.batchName
+            batch_name = self.batch_name
         if company_identification_number is None:
-            company_identification_number = self.companyIdentificationNumber
+            company_identification_number = self.company_identification_number
         if entry_class_code is None:
-            entry_class_code = self.entryClassCode
-        self._batchNumber += 1
+            entry_class_code = self.entry_class_code
+        self._batch_number += 1
         new_batch = BatchHeader(batch_name, discretionary_data, company_identification_number,
                                 entry_class_code, entry_description, dfi_number,
-                                self._batchNumber, service_class, self.descriptiveDate)
-        self.batchRecords.append(new_batch)
+                                self._batch_number, service_class, self.descriptive_date)
+        self.batch_records.append(new_batch)
 
     def append_batch(self, batch):
-        self.batchRecords.append(batch)
+        self.batch_records.append(batch)
 
     def save(self, file_path):
-        self._batchCount = self._batchNumber
-        self._blockCount = 2 + (2 * self._batchCount)
-        self._entryCount = 0
-        self._totalDebitAmount = 0
-        self._totalCreditAmount = 0
+        self._batch_count = self._batch_number
+        self._block_count = 2 + (2 * self._batch_count)
+        self._entry_count = 0
+        self._total_debit_amount = 0
+        self._total_credit_amount = 0
         entry_hash = 0
-        for batch in self.batchRecords:
+        for batch in self.batch_records:
             batch.finalize()
-            self._blockCount += int(batch._entryCount)
-            self._entryCount += int(batch._entryCount)
-            self._totalDebitAmount += int(batch._totalDebitAmount)
-            entry_hash += int(batch._entryHash)
-        self._entryHash = str(entry_hash)[-10:]
-        self._fileControlRecord = FileControl(self._batchCount, self._blockCount, self._entryCount,
-                                              self._entryHash, self._totalDebitAmount, self._totalCreditAmount)
+            self._block_count += int(batch._entry_count)
+            self._entry_count += int(batch._entry_count)
+            self._total_debit_amount += int(batch._total_debit_amount)
+            entry_hash += int(batch._entry_hash)
+        self._entry_hash = str(entry_hash)[-10:]
+        self._file_control_record = FileControl(self._batch_count, self._block_count, self._entry_count,
+                                                self._entry_hash, self._total_debit_amount, self._total_credit_amount)
         with open(file_path, 'w+') as ach_file:
-            file_header = self._fileHeader.generate()
+            file_header = self._file_header.generate()
             ach_file.write(file_header)
-            for batch in self.batchRecords:
+            for batch in self.batch_records:
                 batch_header = batch.generate()
                 ach_file.write(batch_header)
-                for entry in batch.entryRecords:
+                for entry in batch.entry_records:
                     entry_record = entry.generate()
                     ach_file.write(entry_record)
-                    for addenda in entry.addendaRecords:
+                    for addenda in entry.addenda_records:
                         addenda_record = addenda.generate()
                         ach_file.write(addenda_record)
-                batch_control = batch._batchControlRecord
+                batch_control = batch._batch_control_record
                 ach_file.write(batch_control)
-            file_control_record = self._fileControlRecord.generate()
+            file_control_record = self._file_control_record.generate()
             ach_file.write(file_control_record)
 
-            if self.footerLines > 0:
+            if self.footer_lines > 0:
                 line = ''.ljust(94, '9')
-                for x in range(0, self.footerLines):
+                for x in range(0, self.footer_lines):
                     ach_file.write(line)
