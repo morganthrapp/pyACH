@@ -10,22 +10,22 @@ output_file_path = os.getcwd() + '\\test_file.txt'
 
 
 class TestACHRecord(unittest.TestCase):
-    test_ACH_file = ACHRecordTypes.ACHFile()
-    test_ACH_file.batch_name = 'TEST'
-    test_ACH_file.destination_routing_number = 'TEST'
-    test_ACH_file.destination_name = 'TEST'
-    test_ACH_file.destination_routing_number = '9999'
-    test_ACH_file.entry_class_code = 'WEB'
-    test_ACH_file.entry_description = 'TEST'
-    test_ACH_file.header_discretionary_data = 'TEST'
-    test_ACH_file.originRoutingNumber = 'TEST'
-    test_ACH_file.origin_name = 'TEST'
-    test_ACH_file.reference_code = 'TEST'
-    test_ACH_file.originRoutingNumber = '9999'
+    ach_file = ACHRecordTypes.ACHFile()
+    ach_file.batch_name = 'TEST'
+    ach_file.destination_routing_number = 'TEST'
+    ach_file.destination_name = 'TEST'
+    ach_file.destination_routing_number = '9999'
+    ach_file.entry_class_code = 'WEB'
+    ach_file.entry_description = 'TEST'
+    ach_file.header_discretionary_data = 'TEST'
+    ach_file.originRoutingNumber = 'TEST'
+    ach_file.origin_name = 'TEST'
+    ach_file.reference_code = 'TEST'
+    ach_file.originRoutingNumber = '9999'
 
     def test_file_header(self):
-        self.test_ACH_file.create_header()
-        file_header = self.test_ACH_file._file_header.generate()
+        self.ach_file.create_header()
+        file_header = self.ach_file._file_header.generate()
         self.assertEqual(len(file_header), 95)
         self.assertEqual(file_header[:1], '1')
         self.assertEqual(file_header[1:3], '01')
@@ -34,52 +34,59 @@ class TestACHRecord(unittest.TestCase):
         self.assertEqual(file_header[39:40], '1')
 
     def test_batch_header(self):
-        self.test_ACH_file.new_batch('999')
-        test_batch = self.test_ACH_file.batch_records[-1].generate()
+        self.ach_file.new_batch('999', 'TEST')
+        test_batch = self.ach_file.batch_records[-1].generate()
         self.assertEqual(len(test_batch), 95)
         self.assertEqual(test_batch[:1], '5')
         self.assertEqual(test_batch[75:78], '   ')
         self.assertEqual(test_batch[78:79], '1')
 
     def test_entry_record_without_addenda(self):
-        self.test_ACH_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT, '07640125', '9999',
-                                                       '1234.56', '9999', 'test')
-        test_entry = self.test_ACH_file.batch_records[-1].entry_records[-1].generate()
+        self.ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
+                                                  '07640125', '9999',
+                                                  '1234.56', '9999', 'test')
+        test_entry_record = self.ach_file.batch_records[-1].entry_records[-1]
+        test_entry = test_entry_record.generate()
         self.assertEqual(len(test_entry), 95)
         self.assertEqual(test_entry[:1], '6')
         self.assertEqual(test_entry[36:37], '.')
 
     def test_entry_record_with_addenda(self):
-        self.test_ACH_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT, '07640125', '9999',
-                                                       '1234.56', '9999', 'test')
-        self.test_ACH_file.batch_records[-1].entry_records[-1].add_addenda('test', ACHRecordTypes.CCD)
-        test_addenda = self.test_ACH_file.batch_records[-1].entry_records[-1].addenda_records[-1].generate()
+        self.ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
+                                                  '07640125', '9999',
+                                                  '1234.56', '9999', 'test')
+        entry_record = self.ach_file.batch_records[-1].entry_records[-1]
+        entry_record.add_addenda('test', ACHRecordTypes.CCD)
+        addenda_record = entry_record.addenda_records[-1]
+        test_addenda = addenda_record.generate()
         self.assertEqual(len(test_addenda), 95)
         self.assertEqual(test_addenda[:1], '7')
 
 
 class TestAchSave(unittest.TestCase):
-    test_save_ACH_file = ACHRecordTypes.ACHFile()
-    test_save_ACH_file.batch_name = 'TEST'
-    test_save_ACH_file.destination_routing_number = 'TEST'
-    test_save_ACH_file.destination_name = 'TEST'
-    test_save_ACH_file.destination_routing_number = '9999'
-    test_save_ACH_file.entry_class_code = 'WEB'
-    test_save_ACH_file.entry_description = 'TEST'
-    test_save_ACH_file.header_discretionary_data = 'TEST'
-    test_save_ACH_file.origin_name = 'TEST'
-    test_save_ACH_file.reference_code = 'TEST'
-    test_save_ACH_file.originRoutingNumber = '9999'
+    save_ach_file = ACHRecordTypes.ACHFile()
+    save_ach_file.batch_name = 'TEST'
+    save_ach_file.destination_routing_number = 'TEST'
+    save_ach_file.destination_name = 'TEST'
+    save_ach_file.destination_routing_number = '9999'
+    save_ach_file.entry_class_code = 'WEB'
+    save_ach_file.entry_description = 'TEST'
+    save_ach_file.header_discretionary_data = 'TEST'
+    save_ach_file.origin_name = 'TEST'
+    save_ach_file.reference_code = 'TEST'
+    save_ach_file.originRoutingNumber = '9999'
     test_batch_control = ''
     test_file_control = ''
 
     def test_save(self):
-        self.test_save_ACH_file.create_header()
-        self.test_save_ACH_file.new_batch('999')
-        self.test_save_ACH_file.batch_records[0].add_entry(ACHRecordTypes.CHECK_DEPOSIT, '07640125', '9999', '1234.56',
-                                                           '9999', 'test')
-        self.test_save_ACH_file.batch_records[0].entry_records[0].add_addenda('test', ACHRecordTypes.CCD)
-        self.test_save_ACH_file.save(output_file_path)
+        self.save_ach_file.create_header()
+        self.save_ach_file.new_batch('999', 'test')
+        self.save_ach_file.batch_records[-1] \
+            .add_entry(ACHRecordTypes.CHECK_DEPOSIT, '07640125', '9999',
+                       '1234.56', '9999', 'test')
+        self.save_ach_file.batch_records[-1].entry_records[-1] \
+            .add_addenda('test', ACHRecordTypes.CCD)
+        self.save_ach_file.save(output_file_path)
 
     for line in open(output_file_path):
         record_type = line[:1]
