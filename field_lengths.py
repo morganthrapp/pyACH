@@ -66,3 +66,10 @@ ENTRY_LENGTHS = {'RECORD TYPE CODE': 1,
                  'ADDENDA': 1,
                  'TRACE NUMBER': 15
                  }
+
+ADDENDA_LENGTHS = {'RECORD TYPE': 1,
+                   'TYPE CODE': 2,
+                   'MAIN DETAIL': 80,
+                   'SEQUENCE': 4,
+                   'ENTRY RECORD ID': 7
+                   }

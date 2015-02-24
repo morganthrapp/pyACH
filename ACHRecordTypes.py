@@ -1,6 +1,8 @@
 __author__ = 'Morgan Thrapp'
 
 import datetime
+from field_lengths import FILE_HEADER_LENGTHS, FILE_CONTROL_LENGTHS, BATCH_HEADER_LENGTHS, \
+    BATCH_CONTROL_LENGTHS, ENTRY_LENGTHS, ADDENDA_LENGTHS
 
 today_with_format = datetime.date.today().strftime('%y%m%d')
 now_with_format = datetime.datetime.now().time().strftime('%H%M')
@@ -41,6 +43,24 @@ REMIT_SAVINGS_DEBIT = '39'
 SINGLE_ENTRY = 'S'
 RECURRING = 'R'
 
+# Justify types
+JUSTIFY_MODES = {'SR': lambda f, x: f.rjust(x), 'SL': lambda f, x: f.ljust(x), 'SRAZ': lambda f, x: f.rjust(x, '0')}
+SHIFT_RIGHT = 'SR'
+SHIFT_LEFT = 'SL'
+SHIFT_RIGHT_ADD_ZERO = 'SRAZ'
+
+
+def validate_field_length(field, length, justify=None):
+    if len(field) == length:
+        return field
+    elif len(field) > length:
+        return False
+    elif justify in JUSTIFY_MODES:
+        JUSTIFY_MODES[justify](field, length)
+        return field
+    elif len(field) < length:
+        return False
+
 
 class FileHeader:
     _record_type = '1'  # ACH Header records are type 1
@@ -52,13 +72,11 @@ class FileHeader:
     def __init__(self, destination_routing_number,
                  company_identification_number, destination_name, origin_name,
                  reference_code):
-        self._destination_routing_number = \
-            str(destination_routing_number).ljust(10)
-        self._company_identification_number = \
-            str(company_identification_number).ljust(10)
-        self._destination_name = str(destination_name).ljust(23)
-        self._origin_name = str(origin_name).ljust(23)
-        self._reference_code = str(reference_code).ljust(8)
+        self._destination_routing_number = str(destination_routing_number)
+        self._company_identification_number = str(company_identification_number)
+        self._destination_name = str(destination_name)
+        self._origin_name = str(origin_name)
+        self._reference_code = str(reference_code)
         self._creation_date = today_with_format
         self._creation_time = now_with_format
         self._file_id_modifier = 'A'  # First file of the day has A.
@@ -66,19 +84,30 @@ class FileHeader:
         self.file_header_record = ''
 
     def generate(self):
-        self.file_header_record += self._record_type
-        self.file_header_record += self._priority_code
-        self.file_header_record += self._destination_routing_number
-        self.file_header_record += self._company_identification_number
-        self.file_header_record += self._creation_date
-        self.file_header_record += self._creation_time
-        self.file_header_record += self._file_id_modifier
-        self.file_header_record += self._record_size
-        self.file_header_record += self._blocking_factor
-        self.file_header_record += self._format_code
-        self.file_header_record += self._destination_name
-        self.file_header_record += self._origin_name
-        self.file_header_record += self._reference_code
+        self.file_header_record += validate_field_length(self._record_type, FILE_HEADER_LENGTHS['RECORD TYPE CODE'])
+        self.file_header_record += validate_field_length(self._priority_code, FILE_HEADER_LENGTHS['PRIORITY CODE'])
+        self.file_header_record += validate_field_length(self._destination_routing_number,
+                                                         FILE_HEADER_LENGTHS['IMMEDIATE DESTINATION'],
+                                                         SHIFT_LEFT)
+        self.file_header_record += validate_field_length(self._company_identification_number,
+                                                         FILE_HEADER_LENGTHS['IMMEDIATE ORIGIN'],
+                                                         SHIFT_LEFT)
+        self.file_header_record += validate_field_length(self._creation_date, FILE_HEADER_LENGTHS['FILE CREATION DATE'])
+        self.file_header_record += validate_field_length(self._creation_time, FILE_HEADER_LENGTHS['FILE CREATION TIME'])
+        self.file_header_record += validate_field_length(self._file_id_modifier,
+                                                         FILE_HEADER_LENGTHS['FILE ID MODIFIER'])
+        self.file_header_record += validate_field_length(self._record_size, FILE_HEADER_LENGTHS['RECORD SIZE'])
+        self.file_header_record += validate_field_length(self._blocking_factor, FILE_HEADER_LENGTHS['BLOCKING FACTOR'])
+        self.file_header_record += validate_field_length(self._format_code, FILE_HEADER_LENGTHS['FORMAT CODE'])
+        self.file_header_record += validate_field_length(self._destination_name,
+                                                         FILE_HEADER_LENGTHS['IMMEDIATE DESTINATION NAME'],
+                                                         SHIFT_LEFT)
+        self.file_header_record += validate_field_length(self._origin_name,
+                                                         FILE_HEADER_LENGTHS['IMMEDIATE ORIGIN NAME'],
+                                                         SHIFT_LEFT)
+        self.file_header_record += validate_field_length(self._reference_code,
+                                                         FILE_HEADER_LENGTHS['REFERENCE CODE'],
+                                                         SHIFT_LEFT)
         self.file_header_record += '\n'
         self._file_id_modifier = chr(ord(self._file_id_modifier) + 1)
         return self.file_header_record
@@ -86,27 +115,42 @@ class FileHeader:
 
 class FileControl:
     _record_type = '9'  # ACH File Control records are type 9
-    __reserved = ''.ljust(39)  # DO NOT MODIFY THIS. It needs to be blank.
+    __reserved = ''  # DO NOT MODIFY THIS. It needs to be blank.
 
     def __init__(self, batch_count, block_count, entry_count, entry_hash,
                  total_debt_amount, total_credit_amount):
-        self._batch_count = str(batch_count).rjust(6, '0')
-        self._block_count = str(block_count).rjust(6, '0')
-        self._entry_count = str(entry_count).rjust(8, '0')
-        self._entry_hash = str(entry_hash).ljust(10)
-        self._total_debit_amount = str(total_debt_amount).rjust(12, '0')
-        self._total_credit_amount = str(total_credit_amount).rjust(12, '0')
+        self._batch_count = str(batch_count)
+        self._block_count = str(block_count)
+        self._entry_count = str(entry_count)
+        self._entry_hash = str(entry_hash)
+        self._total_debit_amount = str(total_debt_amount)
+        self._total_credit_amount = str(total_credit_amount)
         self.file_control_record = ''
 
     def generate(self):
-        self.file_control_record += self._record_type
-        self.file_control_record += self._batch_count
-        self.file_control_record += self._block_count
-        self.file_control_record += self._entry_count
-        self.file_control_record += self._entry_hash
-        self.file_control_record += self._total_debit_amount
-        self.file_control_record += self._total_credit_amount
-        self.file_control_record += self.__reserved
+        self.file_control_record += validate_field_length(self._record_type, FILE_CONTROL_LENGTHS['RECORD TYPE CODE'])
+        self.file_control_record += validate_field_length(self._batch_count,
+                                                          FILE_CONTROL_LENGTHS['BATCH COUNT'],
+                                                          SHIFT_RIGHT_ADD_ZERO)
+        self.file_control_record += validate_field_length(self._block_count,
+                                                          FILE_CONTROL_LENGTHS['BLOCK COUNT'],
+                                                          SHIFT_RIGHT_ADD_ZERO)
+        self.file_control_record += validate_field_length(self._entry_count,
+                                                          FILE_CONTROL_LENGTHS['DETAIL COUNT'],
+                                                          SHIFT_RIGHT_ADD_ZERO)
+        self.file_control_record += validate_field_length(self._entry_hash,
+                                                          FILE_CONTROL_LENGTHS['ENTRY HASH'],
+                                                          SHIFT_LEFT)
+        self.file_control_record += validate_field_length(self._total_debit_amount,
+                                                          FILE_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
+                                                          SHIFT_RIGHT_ADD_ZERO)
+        self.file_control_record += validate_field_length(self._total_credit_amount,
+                                                          FILE_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'],
+                                                          SHIFT_RIGHT_ADD_ZERO)
+        self.file_control_record += validate_field_length(self.__reserved,
+                                                          FILE_CONTROL_LENGTHS['RESERVED'],
+                                                          SHIFT_LEFT)
+
         return self.file_control_record
 
 
@@ -154,7 +198,7 @@ class Batch:
 
 class BatchHeader:
     _record_type = '5'  # ACH Batch Header records are type 5
-    __reserved = ''.ljust(3)  # DO NOT MODIFY THIS.
+    __reserved = ' '  # DO NOT MODIFY THIS.
     # It is auto generated by the receiving bank.
     _originator_status_code = '1'
 
@@ -163,17 +207,16 @@ class BatchHeader:
                  entry_class_code, entry_description, dfi_number, batch_number,
                  service_class=MIXED, description_date=today_with_format,
                  effective_entry_date=today_with_format):
-        self._company_name = str(company_name).ljust(16)
-        self._discretionary_data = str(discretionary_data).ljust(20)
-        self._company_identification_number = str(
-            company_identification_number).ljust(10)
-        self._entry_class_code = str(entry_class_code).ljust(3)
-        self._service_class = str(service_class).ljust(3)
-        self._entry_description = str(entry_description).ljust(10)
-        self._descriptive_date = str(description_date).ljust(6)
-        self._effective_entry_date = str(effective_entry_date).ljust(6)
-        self._originator_dfi_identification = str(dfi_number).ljust(8)
-        self._batch_number = str(batch_number).ljust(7)
+        self._company_name = str(company_name)
+        self._discretionary_data = str(discretionary_data)
+        self._company_identification_number = str(company_identification_number)
+        self._entry_class_code = str(entry_class_code)
+        self._service_class = str(service_class)
+        self._entry_description = str(entry_description)
+        self._descriptive_date = str(description_date)
+        self._effective_entry_date = str(effective_entry_date)
+        self._originator_dfi_identification = str(dfi_number)
+        self._batch_number = str(batch_number)
         self._batch_control_record = ''
         self.entry_records = []
         self._entry_count = len(self.entry_records)
@@ -183,19 +226,43 @@ class BatchHeader:
         self.batch_header_record = ''
 
     def generate(self):
-        self.batch_header_record += self._record_type[:1]
-        self.batch_header_record += self._service_class[:3]
-        self.batch_header_record += self._company_name[:16]
-        self.batch_header_record += self._discretionary_data[:20]
-        self.batch_header_record += self._company_identification_number[:10]
-        self.batch_header_record += self._entry_class_code[:3]
-        self.batch_header_record += self._entry_description[:10]
-        self.batch_header_record += self._descriptive_date[:6]
-        self.batch_header_record += self._effective_entry_date[:6]
-        self.batch_header_record += self.__reserved[:3]
-        self.batch_header_record += self._originator_status_code[:1]
-        self.batch_header_record += self._originator_dfi_identification[:8]
-        self.batch_header_record += self._batch_number[:7]
+        self.batch_header_record += validate_field_length(self._record_type, BATCH_HEADER_LENGTHS['RECORD TYPE CODE'])
+        self.batch_header_record += validate_field_length(self._service_class,
+                                                          BATCH_HEADER_LENGTHS['SERVICE CLASS CODE'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._company_name,
+                                                          BATCH_HEADER_LENGTHS['COMPANY NAME'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._discretionary_data,
+                                                          BATCH_HEADER_LENGTHS['DISCRETIONARY DATA'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._company_identification_number,
+                                                          BATCH_HEADER_LENGTHS['COMPANY IDENTIFICATION'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._entry_class_code,
+                                                          BATCH_HEADER_LENGTHS['ENTRY CLASS CODE'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._entry_description,
+                                                          BATCH_HEADER_LENGTHS['ENTRY DESCRIPTION'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._descriptive_date,
+                                                          BATCH_HEADER_LENGTHS['DESCRIPTIVE DATE'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._effective_entry_date,
+                                                          BATCH_HEADER_LENGTHS['EFFECTIVE ENTRY DATE'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self.__reserved,
+                                                          BATCH_HEADER_LENGTHS['SETTLEMENT DATE'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._originator_status_code,
+                                                          BATCH_HEADER_LENGTHS['ORIGINATOR STATUS CODE'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._originator_dfi_identification,
+                                                          BATCH_HEADER_LENGTHS['ORIGINATING DFI IDENTIFICATION'],
+                                                          SHIFT_LEFT)
+        self.batch_header_record += validate_field_length(self._batch_number,
+                                                          BATCH_HEADER_LENGTHS['BATCH NUMBER'],
+                                                          SHIFT_RIGHT_ADD_ZERO)
         self.batch_header_record += '\n'
         return self.batch_header_record
 
@@ -232,38 +299,57 @@ class BatchHeader:
 
 class BatchControl:
     _record_type = '8'  # ACH Batch Control records are type 8
-    __authentication_code = ''.ljust(19)  # DO NOT MODIFY THIS.
-    # It needs to be blank.
-    __reserved = ''.ljust(6)  # DO NOT MODIFY THIS. It needs to be blank.
+    __authentication_code = ''  # DO NOT MODIFY THIS. It needs to be blank.
+    __reserved = ''  # DO NOT MODIFY THIS. It needs to be blank.
 
     def __init__(self, entry_count, entry_hash, total_debt_amount,
                  total_credit_amount, company_identification_number,
                  dfi_number, batch_number, service_class=MIXED):
-        self._service_class = str(service_class).ljust(3)
-        self._entry_count = str(entry_count).rjust(6, '0')
-        self.entry_hash = str(entry_hash).ljust(10)
-        self._total_debit_amount = str(total_debt_amount).rjust(12, '0')
-        self._total_credit_amount = str(total_credit_amount).rjust(12, '0')
-        self._company_identification_number = \
-            str(company_identification_number).ljust(10)
-        self._originator_dfi_identification = str(dfi_number).ljust(8)
-        self._batch_number = str(batch_number).rjust(7)
+        self._service_class = str(service_class)
+        self._entry_count = str(entry_count)
+        self.entry_hash = str(entry_hash)
+        self._total_debit_amount = str(total_debt_amount)
+        self._total_credit_amount = str(total_credit_amount)
+        self._company_identification_number = str(company_identification_number)
+        self._originator_dfi_identification = str(dfi_number)
+        self._batch_number = str(batch_number)
         self.batch_control_record = ''
 
     def generate(self):
-        self.batch_control_record += self._record_type[:1]
-        self.batch_control_record += self._service_class[:3]
-        self.batch_control_record += self._entry_count[:6]
-        self.batch_control_record += self.entry_hash[:10]
-        self.batch_control_record += self._total_debit_amount[:12]
-        self.batch_control_record += self._total_credit_amount[:12]
-        self.batch_control_record += self._company_identification_number[:10]
-        self.batch_control_record += self.__authentication_code[:19]
-        self.batch_control_record += self.__reserved[:6]
-        self.batch_control_record += self._originator_dfi_identification[:8]
-        self.batch_control_record += self._batch_number[:7]
+        self.batch_control_record += validate_field_length(self._record_type,
+                                                           BATCH_CONTROL_LENGTHS[''])
+        self.batch_control_record += validate_field_length(self._service_class,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_LEFT)
+        self.batch_control_record += validate_field_length(self._entry_count,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_RIGHT_ADD_ZERO)
+        self.batch_control_record += validate_field_length(self.entry_hash,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_LEFT)
+        self.batch_control_record += validate_field_length(self._total_debit_amount,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_RIGHT_ADD_ZERO)
+        self.batch_control_record += validate_field_length(self._total_credit_amount,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_RIGHT_ADD_ZERO)
+        self.batch_control_record += validate_field_length(self._company_identification_number,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_RIGHT_ADD_ZERO)
+        self.batch_control_record += validate_field_length(self.__authentication_code,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_LEFT)
+        self.batch_control_record += validate_field_length(self.__reserved,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_LEFT)
+        self.batch_control_record += validate_field_length(self._originator_dfi_identification,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_LEFT)
+        self.batch_control_record += validate_field_length(self._batch_number,
+                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += '\n'
-        return self.batch_control_record[:95]
+        return self.batch_control_record
 
 
 class Entry:
@@ -274,14 +360,14 @@ class Entry:
     def __init__(self, transaction_code, routing_number, account_number,
                  amount, identification_number, receiver_name,
                  discretionary_data, trace_number):
-        self._transaction_code = str(transaction_code).ljust(2)
-        self._routing_number = str(routing_number).ljust(8)
-        self._account_number = str(account_number).ljust(17)
-        self._amount = str(amount).rjust(10, '0')
-        self._identification_number = str(identification_number).ljust(15)
-        self._receiver_name = str(receiver_name).ljust(22)
-        self._discretionary_data = str(discretionary_data).ljust(2)
-        self._trace_number = str(trace_number).ljust(15)
+        self._transaction_code = str(transaction_code)
+        self._routing_number = str(routing_number)
+        self._account_number = str(account_number)
+        self._amount = str(amount)
+        self._identification_number = str(identification_number)
+        self._receiver_name = str(receiver_name)
+        self._discretionary_data = str(discretionary_data)
+        self._trace_number = str(trace_number)
         self._addenda_count = 0
         self.entry_record = ''
         self.addenda_records = []
@@ -289,8 +375,7 @@ class Entry:
         self._entry_number += 1
 
     def _get_trace_number(self):
-        trace_number = '{0}{1}'.format(self._trace_number,
-                                       str(self._entry_number).ljust(7, '0'))
+        trace_number = '{0}{1}'.format(self._trace_number, str(self._entry_number).ljust(7, '0'))
         return trace_number
 
     def _check_digit(self):
@@ -308,17 +393,38 @@ class Entry:
         return str(check_digit)
 
     def generate(self):
-        self.entry_record += self._record_type[:1]
-        self.entry_record += self._transaction_code[:2]
-        self.entry_record += self._routing_number[:8]
-        self.entry_record += self._check_digit()[:1]
-        self.entry_record += self._account_number[:17]
-        self.entry_record += self._amount[:10]
-        self.entry_record += self._identification_number[:15]
-        self.entry_record += self._receiver_name[:22]
-        self.entry_record += self._discretionary_data[:2]
-        self.entry_record += self._has_addenda[:1]
-        self.entry_record += self._get_trace_number()[:15]
+        self.entry_record += validate_field_length(self._record_type,
+                                                   ENTRY_LENGTHS['RECORD TYPE CODE'])
+        self.entry_record += validate_field_length(self._transaction_code,
+                                                   ENTRY_LENGTHS['TRANSACTION CODE'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._routing_number,
+                                                   ENTRY_LENGTHS['RECEIVING DFI ID'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._check_digit(),
+                                                   ENTRY_LENGTHS['CHECK DIGIT'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._account_number,
+                                                   ENTRY_LENGTHS['DFI ACCOUNT NUMBER'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._amount,
+                                                   ENTRY_LENGTHS['DOLLAR AMOUNT'],
+                                                   SHIFT_RIGHT_ADD_ZERO)
+        self.entry_record += validate_field_length(self._identification_number,
+                                                   ENTRY_LENGTHS['INDIVIDUAL IDENTIFICATION'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._receiver_name,
+                                                   ENTRY_LENGTHS['INDIVIDUAL NAME'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._discretionary_data,
+                                                   ENTRY_LENGTHS['DISCRETIONARY DATA'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._has_addenda,
+                                                   ENTRY_LENGTHS['ADDENDA'],
+                                                   SHIFT_LEFT)
+        self.entry_record += validate_field_length(self._get_trace_number(),
+                                                   ENTRY_LENGTHS['TRACE NUMBER'],
+                                                   SHIFT_LEFT)
         self.entry_record += '\n'
         return self.entry_record[:95]
 
@@ -336,18 +442,27 @@ class Addenda:
     _record_type = '7'  # Addenda records are type 7
 
     def __init__(self, main_detail, type_code, entry_record_id):
-        self._main_detail = str(main_detail).ljust(80)
-        self._type_code = str(type_code).ljust(2)
-        self._entry_record_id = str(entry_record_id).ljust(7)
+        self._main_detail = str(main_detail)
+        self._type_code = str(type_code)
+        self._entry_record_id = str(entry_record_id)
         self._addenda_sequence = 1
         self.addenda_record = ''
 
     def generate(self):
-        self.addenda_record += self._record_type[:1]
-        self.addenda_record += self._type_code[:2]
-        self.addenda_record += self._main_detail[:80]
-        self.addenda_record += str(self._addenda_sequence).ljust(4)[:4]
-        self.addenda_record += self._entry_record_id[:7]
+        self.addenda_record += validate_field_length(self._record_type,
+                                                     ADDENDA_LENGTHS['RECORD TYPE'])
+        self.addenda_record += validate_field_length(self._type_code,
+                                                     ADDENDA_LENGTHS['TYPE CODE'],
+                                                     SHIFT_LEFT)
+        self.addenda_record += validate_field_length(self._main_detail,
+                                                     ADDENDA_LENGTHS['MAIN DETAIL'],
+                                                     SHIFT_LEFT)
+        self.addenda_record += validate_field_length(str(self._addenda_sequence),
+                                                     ADDENDA_LENGTHS['SEQUENCE'],
+                                                     SHIFT_LEFT)
+        self.addenda_record += validate_field_length(self._entry_record_id,
+                                                     ADDENDA_LENGTHS['ENTRY RECORD ID'],
+                                                     SHIFT_LEFT)
         self.addenda_record += '\n'
         self._addenda_sequence += 1
         return self.addenda_record
@@ -443,6 +558,6 @@ class ACHFile(object):
             ach_file.write(file_control_record)
 
             if self.footer_lines > 0:
-                line = ''.ljust(94, '9')
+                line = '\n'.ljust(95, '9')
                 for x in range(0, self.footer_lines):
                     ach_file.write(line)
