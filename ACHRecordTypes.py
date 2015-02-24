@@ -317,36 +317,36 @@ class BatchControl:
 
     def generate(self):
         self.batch_control_record += validate_field_length(self._record_type,
-                                                           BATCH_CONTROL_LENGTHS[''])
+                                                           BATCH_CONTROL_LENGTHS['RECORD TYPE CODE'])
         self.batch_control_record += validate_field_length(self._service_class,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['SERVICE CLASS CODE'],
                                                            SHIFT_LEFT)
         self.batch_control_record += validate_field_length(self._entry_count,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['DETAIL COUNT'],
                                                            SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field_length(self.entry_hash,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['ENTRY HASH'],
                                                            SHIFT_LEFT)
         self.batch_control_record += validate_field_length(self._total_debit_amount,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
                                                            SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field_length(self._total_credit_amount,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'],
                                                            SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field_length(self._company_identification_number,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['COMPANY IDENTIFICATION'],
                                                            SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field_length(self.__authentication_code,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['AUTHENTICATION CODE'],
                                                            SHIFT_LEFT)
         self.batch_control_record += validate_field_length(self.__reserved,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['RESERVED'],
                                                            SHIFT_LEFT)
         self.batch_control_record += validate_field_length(self._originator_dfi_identification,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['ORIGINATING DFI IDENTIFICATION'],
                                                            SHIFT_LEFT)
         self.batch_control_record += validate_field_length(self._batch_number,
-                                                           BATCH_CONTROL_LENGTHS[''],
+                                                           BATCH_CONTROL_LENGTHS['BATCH NUMBER'],
                                                            SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += '\n'
         return self.batch_control_record
