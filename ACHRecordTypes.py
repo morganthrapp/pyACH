@@ -51,15 +51,19 @@ SHIFT_RIGHT_ADD_ZERO = 'SRAZ'
 
 
 def validate_field_length(field, length, justify=None):
-    if len(field) == length:
+    if len(field.strip()) == 0:
+        return ' ' * length
+    elif len(field) == length:
         return field
     elif len(field) > length:
-        return False
+        print(field, length)
+        return field[:length]
     elif justify in JUSTIFY_MODES:
-        JUSTIFY_MODES[justify](field, length)
-        return field
+        return JUSTIFY_MODES[justify](field, length)
     elif len(field) < length:
-        return False
+        print(field, length)
+        return field[:length]
+
 
 
 class FileHeader:
