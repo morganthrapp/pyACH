@@ -1,9 +1,11 @@
 __author__ = 'Morgan Thrapp'
 
 import datetime
+import re
 from field_lengths import FILE_HEADER_LENGTHS, FILE_CONTROL_LENGTHS, BATCH_HEADER_LENGTHS, \
     BATCH_CONTROL_LENGTHS, ENTRY_LENGTHS, ADDENDA_LENGTHS
 
+# Datetime formats
 today_with_format = datetime.date.today().strftime('%y%m%d')
 now_with_format = datetime.datetime.now().time().strftime('%H%M')
 yesterday = datetime.datetime.now() - datetime.timedelta(1)
@@ -49,10 +51,13 @@ SHIFT_RIGHT = 'SR'
 SHIFT_LEFT = 'SL'
 SHIFT_RIGHT_ADD_ZERO = 'SRAZ'
 
+# Alphanumeric check
+is_alphanumeric = re.compile('[\W_]+')
 
-def validate_field(field, length, justify=None, remove_char=None):
-    if not (remove_char is None):
-        field = field.replace(remove_char, '')
+
+def validate_field(field, length, justify=None, to_alphanumeric=True):
+    if to_alphanumeric:
+        field = is_alphanumeric.sub('', field)
     if len(field.strip()) == 0:
         return ' ' * length
     elif len(field) == length:
@@ -133,12 +138,9 @@ class FileControl:
                                                    SHIFT_RIGHT_ADD_ZERO)
         self.file_control_record += validate_field(self._entry_hash, FILE_CONTROL_LENGTHS['ENTRY HASH'], SHIFT_LEFT)
         self.file_control_record += validate_field(self._total_debit_amount, FILE_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
-                                                   SHIFT_RIGHT_ADD_ZERO,
-                                                   '.')
+                                                   SHIFT_RIGHT_ADD_ZERO)
         self.file_control_record += validate_field(self._total_credit_amount,
-                                                   FILE_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'],
-                                                   SHIFT_RIGHT_ADD_ZERO,
-                                                   '.')
+                                                   FILE_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
         self.file_control_record += validate_field(self.__reserved, FILE_CONTROL_LENGTHS['RESERVED'], SHIFT_LEFT)
 
         return self.file_control_record
@@ -299,13 +301,9 @@ class BatchControl:
                                                     SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field(self.entry_hash, BATCH_CONTROL_LENGTHS['ENTRY HASH'], SHIFT_LEFT)
         self.batch_control_record += validate_field(self._total_debit_amount,
-                                                    BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
-                                                    SHIFT_RIGHT_ADD_ZERO,
-                                                    '.')
+                                                    BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field(self._total_credit_amount,
-                                                    BATCH_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'],
-                                                    SHIFT_RIGHT_ADD_ZERO,
-                                                    '.')
+                                                    BATCH_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field(self._company_identification_number,
                                                     BATCH_CONTROL_LENGTHS['COMPANY IDENTIFICATION'],
                                                     SHIFT_RIGHT_ADD_ZERO)
@@ -366,7 +364,7 @@ class Entry:
         self.entry_record += validate_field(self._routing_number, ENTRY_LENGTHS['RECEIVING DFI ID'], SHIFT_LEFT)
         self.entry_record += validate_field(self._check_digit(), ENTRY_LENGTHS['CHECK DIGIT'], SHIFT_LEFT)
         self.entry_record += validate_field(self._account_number, ENTRY_LENGTHS['DFI ACCOUNT NUMBER'], SHIFT_LEFT)
-        self.entry_record += validate_field(self._amount, ENTRY_LENGTHS['DOLLAR AMOUNT'], SHIFT_RIGHT_ADD_ZERO, '.')
+        self.entry_record += validate_field(self._amount, ENTRY_LENGTHS['DOLLAR AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
         self.entry_record += validate_field(self._identification_number, ENTRY_LENGTHS['INDIVIDUAL IDENTIFICATION'],
                                             SHIFT_LEFT)
         self.entry_record += validate_field(self._receiver_name, ENTRY_LENGTHS['INDIVIDUAL NAME'], SHIFT_LEFT)
