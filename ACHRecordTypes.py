@@ -124,8 +124,8 @@ class FileControl:
         self._block_count = str(block_count)
         self._entry_count = str(entry_count)
         self._entry_hash = str(entry_hash)
-        self._total_debit_amount = str(total_debt_amount)
-        self._total_credit_amount = str(total_credit_amount)
+        self._total_debit_amount = total_debt_amount
+        self._total_credit_amount = total_credit_amount
         self.file_control_record = ''
 
     def generate(self):
@@ -137,10 +137,12 @@ class FileControl:
         self.file_control_record += validate_field(self._entry_count, FILE_CONTROL_LENGTHS['DETAIL COUNT'],
                                                    SHIFT_RIGHT_ADD_ZERO)
         self.file_control_record += validate_field(self._entry_hash, FILE_CONTROL_LENGTHS['ENTRY HASH'], SHIFT_LEFT)
-        self.file_control_record += validate_field(self._total_debit_amount, FILE_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
-                                                   SHIFT_RIGHT_ADD_ZERO)
-        self.file_control_record += validate_field(self._total_credit_amount,
-                                                   FILE_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
+        self.file_control_record += validate_field(str(self._total_debit_amount),
+                                                   FILE_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
+                                                   SHIFT_RIGHT_ADD_ZERO, True)
+        self.file_control_record += validate_field(str(self._total_credit_amount),
+                                                   FILE_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'],
+                                                   SHIFT_RIGHT_ADD_ZERO, True)
         self.file_control_record += validate_field(self.__reserved, FILE_CONTROL_LENGTHS['RESERVED'], SHIFT_LEFT)
 
         return self.file_control_record
@@ -211,7 +213,7 @@ class BatchHeader:
         self._batch_number = str(batch_number)
         self._batch_control_record = ''
         self.entry_records = []
-        self._entry_count = len(self.entry_records)
+        self._entry_count = 0
         self._total_debit_amount = 0
         self._total_credit_amount = 0
         self._entry_hash = 0
@@ -245,26 +247,24 @@ class BatchHeader:
         return self.batch_header_record
 
     def finalize(self):
-        self._entry_count = len(self.entry_records)
         entry_hash = 0
         for entry in self.entry_records:
             entry.finalize()
             self._entry_count += 1
             if entry._transaction_code in (CHECK_DEBIT, SAVINGS_DEBIT):
-                self._total_debit_amount += float(entry._amount)
+                self._total_debit_amount += entry._amount
             elif entry._transaction_code in (CHECK_DEPOSIT, SAVINGS_DEPOSIT):
-                self._total_credit_amount += float(entry._amount)
+                self._total_credit_amount += entry._amount
             entry_hash += int(entry._routing_number)
         self._entry_hash = str(entry_hash)[-10:]
-        self._batch_control_record = \
-            BatchControl(self._entry_count,
-                         self._entry_hash,
-                         self._total_debit_amount,
-                         self._total_credit_amount,
-                         self._company_name,
-                         self._originator_dfi_identification,
-                         self._batch_number,
-                         self._service_class).generate()
+        self._batch_control_record = BatchControl(self._entry_count,
+                                                  self._entry_hash,
+                                                  self._total_debit_amount,
+                                                  self._total_credit_amount,
+                                                  self._company_identification_number,
+                                                  self._originator_dfi_identification,
+                                                  self._batch_number,
+                                                  self._service_class).generate()
 
     def add_entry(self, transaction_code, routing_number, account_number,
                   amount, identification_number, receiver_name,
@@ -286,8 +286,8 @@ class BatchControl:
         self._service_class = str(service_class)
         self._entry_count = str(entry_count)
         self.entry_hash = str(entry_hash)
-        self._total_debit_amount = str(total_debt_amount)
-        self._total_credit_amount = str(total_credit_amount)
+        self._total_debit_amount = total_debt_amount
+        self._total_credit_amount = total_credit_amount
         self._company_identification_number = str(company_identification_number)
         self._originator_dfi_identification = str(dfi_number)
         self._batch_number = str(batch_number)
@@ -300,10 +300,12 @@ class BatchControl:
         self.batch_control_record += validate_field(self._entry_count, BATCH_CONTROL_LENGTHS['DETAIL COUNT'],
                                                     SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field(self.entry_hash, BATCH_CONTROL_LENGTHS['ENTRY HASH'], SHIFT_LEFT)
-        self.batch_control_record += validate_field(self._total_debit_amount,
-                                                    BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
-        self.batch_control_record += validate_field(self._total_credit_amount,
-                                                    BATCH_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
+        self.batch_control_record += validate_field(str(self._total_debit_amount),
+                                                    BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
+                                                    SHIFT_RIGHT_ADD_ZERO, True)
+        self.batch_control_record += validate_field(str(self._total_credit_amount),
+                                                    BATCH_CONTROL_LENGTHS['TOTAL CREDIT AMOUNT'],
+                                                    SHIFT_RIGHT_ADD_ZERO, True)
         self.batch_control_record += validate_field(self._company_identification_number,
                                                     BATCH_CONTROL_LENGTHS['COMPANY IDENTIFICATION'],
                                                     SHIFT_RIGHT_ADD_ZERO)
@@ -327,9 +329,9 @@ class Entry:
                  amount, identification_number, receiver_name,
                  discretionary_data, trace_number):
         self._transaction_code = str(transaction_code)
-        self._routing_number = str(routing_number)
+        self._routing_number = routing_number
         self._account_number = str(account_number)
-        self._amount = str(amount)
+        self._amount = amount
         self._identification_number = str(identification_number)
         self._receiver_name = str(receiver_name)
         self._discretionary_data = str(discretionary_data)
@@ -364,7 +366,8 @@ class Entry:
         self.entry_record += validate_field(self._routing_number, ENTRY_LENGTHS['RECEIVING DFI ID'], SHIFT_LEFT)
         self.entry_record += validate_field(self._check_digit(), ENTRY_LENGTHS['CHECK DIGIT'], SHIFT_LEFT)
         self.entry_record += validate_field(self._account_number, ENTRY_LENGTHS['DFI ACCOUNT NUMBER'], SHIFT_LEFT)
-        self.entry_record += validate_field(self._amount, ENTRY_LENGTHS['DOLLAR AMOUNT'], SHIFT_RIGHT_ADD_ZERO)
+        self.entry_record += validate_field(str(self._amount), ENTRY_LENGTHS['DOLLAR AMOUNT'],
+                                            SHIFT_RIGHT_ADD_ZERO, True)
         self.entry_record += validate_field(self._identification_number, ENTRY_LENGTHS['INDIVIDUAL IDENTIFICATION'],
                                             SHIFT_LEFT)
         self.entry_record += validate_field(self._receiver_name, ENTRY_LENGTHS['INDIVIDUAL NAME'], SHIFT_LEFT)
@@ -461,23 +464,22 @@ class ACHFile(object):
 
     def save(self, file_path):
         self._batch_count = self._batch_number
-        self._block_count = 2 + (2 * self._batch_count)
+        self._block_count = 2 + self.footer_lines
         self._entry_count = 0
         self._total_debit_amount = 0
         self._total_credit_amount = 0
         entry_hash = 0
         for batch in self.batch_records:
             batch.finalize()
-            self._block_count += int(batch._entry_count)
+            self._block_count += int(batch._entry_count) + 2
             self._entry_count += int(batch._entry_count)
-            self._total_debit_amount += float(batch._total_debit_amount)
-            self._total_credit_amount += float(batch._total_credit_amount)
+            self._total_debit_amount += batch._total_debit_amount
+            self._total_credit_amount += batch._total_credit_amount
             entry_hash += int(batch._entry_hash)
         self._entry_hash = str(entry_hash)[-10:]
-        self._file_control_record = \
-            FileControl(self._batch_count, self._block_count,
-                        self._entry_count, self._entry_hash,
-                        self._total_debit_amount, self._total_credit_amount)
+        self._file_control_record = FileControl(self._batch_count, self._block_count,
+                                                self._entry_count, self._entry_hash,
+                                                self._total_debit_amount, self._total_credit_amount)
         with open(file_path, 'w+') as ach_file:
             file_header = self._file_header.generate()
             ach_file.write(file_header)
