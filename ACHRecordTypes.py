@@ -250,9 +250,9 @@ class BatchHeader:
 
     def finalize(self):
         entry_hash = 0
+        self._entry_count = len(self.entry_records)
         for entry in self.entry_records:
-            entry.finalize()
-            self._entry_count += 1
+            self._entry_count += entry._addenda_count
             if entry._transaction_code in (CHECK_DEBIT, SAVINGS_DEBIT):
                 self._total_debit_amount += entry._amount
             elif entry._transaction_code in (CHECK_DEPOSIT, SAVINGS_DEPOSIT):
@@ -366,7 +366,7 @@ class Entry:
     def generate(self):
         self.entry_record += validate_field(self._record_type, ENTRY_LENGTHS['RECORD TYPE CODE'])
         self.entry_record += validate_field(self._transaction_code, ENTRY_LENGTHS['TRANSACTION CODE'], SHIFT_LEFT)
-        self.entry_record += validate_field(self._routing_number, ENTRY_LENGTHS['RECEIVING DFI ID'], SHIFT_LEFT)
+        self.entry_record += validate_field(str(self._routing_number), ENTRY_LENGTHS['RECEIVING DFI ID'], SHIFT_LEFT)
         self.entry_record += validate_field(self._check_digit(), ENTRY_LENGTHS['CHECK DIGIT'], SHIFT_LEFT)
         self.entry_record += validate_field(self._account_number, ENTRY_LENGTHS['DFI ACCOUNT NUMBER'], SHIFT_LEFT)
         self.entry_record += validate_field(str(self._amount), ENTRY_LENGTHS['DOLLAR AMOUNT'],
@@ -380,14 +380,12 @@ class Entry:
         self.entry_record += '\n'
         return self.entry_record[:95]
 
-    def finalize(self):
-        self._addenda_count = len(self.addenda_records)
-
     def add_addenda(self, main_detail, type_code):
         _entry_record_id = str(self._trace_number)
         _addenda_record = Addenda(main_detail, type_code, _entry_record_id)
         self.addenda_records.append(_addenda_record)
         self._has_addenda = '1'
+        self._addenda_count += 1
 
 
 class Addenda:
@@ -464,23 +462,29 @@ class ACHFile(object):
 
     def append_batch(self, batch):
         self.batch_records.append(batch)
+        self._batch_number += 1
 
     def save(self, file_path):
-        self._batch_count = self._batch_number
-        self._block_count = 2 + self.footer_lines
+        self._batch_count = len(self.batch_records)
         self._entry_count = 0
         self._total_debit_amount = 0
         self._total_credit_amount = 0
         entry_hash = 0
+        footer_lines = 0
+        block_count = 0
+        line_count = 0
         for batch in self.batch_records:
             batch.finalize()
-            self._block_count += int(batch._entry_count) + 2
             self._entry_count += int(batch._entry_count)
             self._total_debit_amount += batch._total_debit_amount
             self._total_credit_amount += batch._total_credit_amount
             entry_hash += int(batch._entry_hash)
         self._entry_hash = str(entry_hash)[-10:]
-        self._file_control_record = FileControl(self._batch_count, self._block_count,
+        line_count += (self._batch_count * 2) + self._entry_count + 2
+        block_count, footer_lines = divmod(line_count, 10)
+        footer_lines = 10 - footer_lines
+        block_count += 1
+        self._file_control_record = FileControl(self._batch_count, block_count,
                                                 self._entry_count, self._entry_hash,
                                                 self._total_debit_amount, self._total_credit_amount)
         with open(file_path, 'w+') as ach_file:
@@ -500,7 +504,7 @@ class ACHFile(object):
             file_control_record = self._file_control_record.generate()
             ach_file.write(file_control_record)
 
-            if self.footer_lines > 0:
+            if footer_lines > 0:
                 line = '\n'.ljust(95, '9')
-                for x in range(0, self.footer_lines):
+                for x in range(0, footer_lines):
                     ach_file.write(line)
