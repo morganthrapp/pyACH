@@ -6,6 +6,7 @@ import re
 from pyach.field_lengths import FILE_HEADER_LENGTHS, FILE_CONTROL_LENGTHS, BATCH_HEADER_LENGTHS, \
     BATCH_CONTROL_LENGTHS, ENTRY_LENGTHS, ADDENDA_LENGTHS
 
+
 # Datetime formats
 today_with_format = datetime.date.today().strftime('%y%m%d')
 now_with_format = datetime.datetime.now().time().strftime('%H%M')
@@ -95,7 +96,7 @@ class FileHeader:
         self.file_header_record += validate_field(self._record_type, FILE_HEADER_LENGTHS['RECORD TYPE CODE'])
         self.file_header_record += validate_field(self._priority_code, FILE_HEADER_LENGTHS['PRIORITY CODE'])
         self.file_header_record += validate_field(self._destination_routing_number,
-                                                  FILE_HEADER_LENGTHS['IMMEDIATE DESTINATION'], SHIFT_LEFT)
+                                                  FILE_HEADER_LENGTHS['IMMEDIATE DESTINATION'], SHIFT_RIGHT)
         self.file_header_record += validate_field(self._company_identification_number,
                                                   FILE_HEADER_LENGTHS['IMMEDIATE ORIGIN'], SHIFT_LEFT)
         self.file_header_record += validate_field(self._creation_date, FILE_HEADER_LENGTHS['FILE CREATION DATE'])
