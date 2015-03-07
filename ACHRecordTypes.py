@@ -350,7 +350,8 @@ class Entry:
         return trace_number
 
     def _check_digit(self):
-        routing_number_list = list(self._routing_number)
+        """Implement NACHA's check digit algorithm"""
+        routing_number_list = list(str(self._routing_number))
         routing_number_sum = 0
         routing_number_sum += (int(routing_number_list[0]) * 3)
         routing_number_sum += (int(routing_number_list[1]) * 7)
