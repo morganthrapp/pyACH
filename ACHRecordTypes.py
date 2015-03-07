@@ -258,7 +258,7 @@ class BatchHeader:
             elif entry._transaction_code in (CHECK_DEPOSIT, SAVINGS_DEPOSIT):
                 self._total_credit_amount += entry._amount
             entry_hash += int(entry._routing_number)
-        self._entry_hash = str(entry_hash)[-10:]
+        self._entry_hash = entry_hash
         self._batch_control_record = BatchControl(self._entry_count,
                                                   self._entry_hash,
                                                   self._total_debit_amount,
@@ -301,7 +301,8 @@ class BatchControl:
                                                     SHIFT_LEFT)
         self.batch_control_record += validate_field(self._entry_count, BATCH_CONTROL_LENGTHS['DETAIL COUNT'],
                                                     SHIFT_RIGHT_ADD_ZERO)
-        self.batch_control_record += validate_field(self.entry_hash, BATCH_CONTROL_LENGTHS['ENTRY HASH'], SHIFT_LEFT)
+        self.batch_control_record += validate_field(str(self._entry_hash), BATCH_CONTROL_LENGTHS['ENTRY HASH'], 
+                                                    SHIFT_LEFT)
         self.batch_control_record += validate_field(str(self._total_debit_amount),
                                                     BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
                                                     SHIFT_RIGHT_ADD_ZERO, True)
