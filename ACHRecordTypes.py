@@ -287,7 +287,7 @@ class BatchControl:
                  dfi_number, batch_number, service_class=MIXED):
         self._service_class = str(service_class)
         self._entry_count = str(entry_count)
-        self._entry_hash = entry_hash
+        self._entry_hash = str(entry_hash)[-10:]
         self._total_debit_amount = total_debt_amount
         self._total_credit_amount = total_credit_amount
         self._company_identification_number = str(company_identification_number)
