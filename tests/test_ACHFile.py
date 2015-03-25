@@ -6,7 +6,7 @@ from random import randint
 
 from loremipsum import get_sentence
 
-import ACHRecordTypes
+from pyach import ACHRecordTypes
 
 
 output_file_path = os.getcwd() + os.path.sep + 'test_file.txt'
@@ -77,15 +77,16 @@ class TestAchSave(unittest.TestCase):
     save_ach_file.originRoutingNumber = randint(0, 999999999)
     test_batch_control = ''
     test_file_control = ''
-
-    def test_save(self):
-        self.save_ach_file.create_header()
-        self.save_ach_file.new_batch(get_sentence(), get_sentence())
-        self.save_ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
-                                                       randint(0, 999999999), randint(0, 999999999),
-                                                       randint(0, 999999999), randint(0, 999999999), get_sentence())
-        self.save_ach_file.batch_records[-1].entry_records[-1].add_addenda(get_sentence(), ACHRecordTypes.CCD)
-        self.save_ach_file.save(output_file_path)
+    file_control = ''
+    line_count = 0
+    entry_addenda_count = 0
+    save_ach_file.create_header()
+    save_ach_file.new_batch(get_sentence(), get_sentence())
+    save_ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
+                                              randint(0, 999999999), randint(0, 999999999),
+                                              randint(0, 999999999), randint(0, 999999999), get_sentence())
+    save_ach_file.batch_records[-1].entry_records[-1].add_addenda(get_sentence(), ACHRecordTypes.CCD)
+    save_ach_file.save(output_file_path)
 
     for line in open(output_file_path):
         record_type = line[:1]
@@ -95,12 +96,15 @@ class TestAchSave(unittest.TestCase):
             batch_header = line
         elif record_type == '6':
             entry_record = line
+            entry_addenda_count += 1
         elif record_type == '7':
             addenda_record = line
+            entry_addenda_count += 1
         elif record_type == '8':
             batch_control = line
-        elif record_type == '9':
+        elif record_type == '9' and file_control == '':
             file_control = line
+        line_count += 1
 
     def test_file_header_line(self):
         self.assertEqual(self.file_header[:1], '1')
@@ -131,15 +135,17 @@ class TestAchSave(unittest.TestCase):
     def test_batch_control_record(self):
         self.assertEqual(self.batch_control[:1], '8')
         self.assertFalse(self.batch_control[74:79].strip())
+        self.assertEqual(self.entry_addenda_count, int(self.batch_control[5:10]))
         batch_control_length = len(self.batch_control)
         self.assertEqual(batch_control_length, 95)
 
     def test_file_control_record(self):
         self.assertEqual(self.file_control[:1], '9')
-        self.assertFalse(self.file_control[56:94].strip())
+        self.assertEqual((self.line_count % 10), 0)
+        block_count, _ = divmod(self.line_count, 10)
+        self.assertEqual(block_count, int(self.file_control[8:13]))
         file_control_length = len(self.file_control)
-        self.assertEqual(file_control_length, 94)
-
+        self.assertEqual(file_control_length, 95)
 
 if __name__ == '__main__':
     test_classes_to_run = [TestACHRecord, TestAchSave]

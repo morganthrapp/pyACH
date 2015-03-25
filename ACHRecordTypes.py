@@ -138,7 +138,8 @@ class FileControl:
                                                    SHIFT_RIGHT_ADD_ZERO)
         self.file_control_record += validate_field(self._entry_count, FILE_CONTROL_LENGTHS['DETAIL COUNT'],
                                                    SHIFT_RIGHT_ADD_ZERO)
-        self.file_control_record += validate_field(self._entry_hash, FILE_CONTROL_LENGTHS['ENTRY HASH'], SHIFT_LEFT)
+        self.file_control_record += validate_field(self._entry_hash, FILE_CONTROL_LENGTHS['ENTRY HASH'],
+                                                   SHIFT_RIGHT_ADD_ZERO)
         self.file_control_record += validate_field(str(self._total_debit_amount),
                                                    FILE_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
                                                    SHIFT_RIGHT_ADD_ZERO, True)
@@ -302,7 +303,7 @@ class BatchControl:
         self.batch_control_record += validate_field(self._entry_count, BATCH_CONTROL_LENGTHS['DETAIL COUNT'],
                                                     SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field(str(self._entry_hash), BATCH_CONTROL_LENGTHS['ENTRY HASH'], 
-                                                    SHIFT_LEFT)
+                                                    SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field(str(self._total_debit_amount),
                                                     BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
                                                     SHIFT_RIGHT_ADD_ZERO, True)
