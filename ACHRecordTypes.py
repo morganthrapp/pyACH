@@ -258,7 +258,7 @@ class BatchHeader:
                 self._total_debit_amount += entry._amount
             elif entry._transaction_code in (CHECK_DEPOSIT, SAVINGS_DEPOSIT):
                 self._total_credit_amount += entry._amount
-            entry_hash += int(entry._routing_number)
+            entry_hash += int(str(entry._routing_number)[:8])
         self._entry_hash = entry_hash
         self._batch_control_record = BatchControl(self._entry_count,
                                                   self._entry_hash,
