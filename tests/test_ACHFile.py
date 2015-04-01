@@ -82,10 +82,11 @@ class TestAchSave(unittest.TestCase):
     entry_addenda_count = 0
     save_ach_file.create_header()
     save_ach_file.new_batch(get_sentence(), get_sentence())
-    save_ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
-                                              randint(0, 999999999), randint(0, 999999999),
-                                              randint(0, 999999999), randint(0, 999999999), get_sentence())
-    save_ach_file.batch_records[-1].entry_records[-1].add_addenda(get_sentence(), ACHRecordTypes.CCD)
+    for x in range(0, 10):
+        save_ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
+                                                  randint(0, 999999999), randint(0, 999999999),
+                                                  randint(0, 999999999), randint(0, 999999999), get_sentence())
+        save_ach_file.batch_records[-1].entry_records[-1].add_addenda(get_sentence(), ACHRecordTypes.CCD)
     save_ach_file.save(output_file_path)
 
     for line in open(output_file_path):
