@@ -56,7 +56,7 @@ BATCH_CONTROL_LENGTHS = {'RECORD TYPE CODE': 1,
 
 ENTRY_LENGTHS = {'RECORD TYPE CODE': 1,
                  'TRANSACTION CODE': 2,
-                 'RECEIVING DFI ID': 8,
+                 'RECEIVING DFI ID': 9,
                  'CHECK DIGIT': 1,
                  'DFI ACCOUNT NUMBER': 17,
                  'DOLLAR AMOUNT': 10,
