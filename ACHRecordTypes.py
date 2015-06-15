@@ -369,7 +369,6 @@ class Entry:
         self.entry_record += validate_field(self._record_type, ENTRY_LENGTHS['RECORD TYPE CODE'])
         self.entry_record += validate_field(self._transaction_code, ENTRY_LENGTHS['TRANSACTION CODE'], SHIFT_LEFT)
         self.entry_record += validate_field(str(self._routing_number), ENTRY_LENGTHS['RECEIVING DFI ID'], SHIFT_LEFT)
-        self.entry_record += validate_field(self._check_digit(), ENTRY_LENGTHS['CHECK DIGIT'], SHIFT_LEFT)
         self.entry_record += validate_field(self._account_number, ENTRY_LENGTHS['DFI ACCOUNT NUMBER'], SHIFT_LEFT)
         self.entry_record += validate_field(str(self._amount), ENTRY_LENGTHS['DOLLAR AMOUNT'],
                                             SHIFT_RIGHT_ADD_ZERO, True)
