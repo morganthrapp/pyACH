@@ -44,10 +44,7 @@ Todo:
 	addendaType = ACHRecordTypes.POS
 	paymentFile.batchRecords[-1].entryRecords[-1].add_addenda(addendaType, 'Here's some additional information about the transaction')
 	//Addenda records are optional.
-																  
-####2.4. Other options:
-	paymentFile.footerLines = 4 //This adds the specified number of lines of 94 9s to the end of the file.
-		
+																  		
 ###3. Save it:
 	paymentFile.save(path_to_save)
 	
