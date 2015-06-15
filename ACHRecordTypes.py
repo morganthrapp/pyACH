@@ -402,7 +402,8 @@ class Addenda:
     def generate(self):
         self.addenda_record += validate_field(self._record_type, ADDENDA_LENGTHS['RECORD TYPE'])
         self.addenda_record += validate_field(self._type_code, ADDENDA_LENGTHS['TYPE CODE'], SHIFT_LEFT)
-        self.addenda_record += validate_field(self._main_detail, ADDENDA_LENGTHS['MAIN DETAIL'], SHIFT_LEFT)
+        self.addenda_record += validate_field(self._main_detail, ADDENDA_LENGTHS['MAIN DETAIL'],
+                                              SHIFT_LEFT, to_alphanumeric=False)
         self.addenda_record += validate_field(str(self._addenda_sequence), ADDENDA_LENGTHS['SEQUENCE'], SHIFT_LEFT)
         self.addenda_record += validate_field(self._entry_record_id, ADDENDA_LENGTHS['ENTRY RECORD ID'], SHIFT_LEFT)
         self.addenda_record += '\n'
