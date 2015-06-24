@@ -270,8 +270,7 @@ class BatchHeader:
                                                   self._service_class).generate()
 
     def add_entry(self, transaction_code, routing_number, account_number,
-                  amount, identification_number, receiver_name,
-                  discretionary_data=''):
+                  amount, identification_number, receiver_name, discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number,
                        amount, identification_number, receiver_name,
                        discretionary_data, self._originator_dfi_identification)
@@ -347,7 +346,7 @@ class Entry:
         self._entry_number += 1
 
     def _get_trace_number(self):
-        trace_number = '{0}{1}'.format(self._trace_number, str(self._entry_number).ljust(7, '0'))
+        trace_number = '{0}{1}'.format(self._routing_number, str(self._entry_number).rjust(6, '0'))
         return trace_number
 
     def _check_digit(self):
