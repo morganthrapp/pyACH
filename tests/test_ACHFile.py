@@ -16,14 +16,14 @@ class TestACHRecord(unittest.TestCase):
     ach_file = ACHRecordTypes.ACHFile()
     ach_file.batch_name = get_sentence()
     ach_file.destination_name = get_sentence()
-    ach_file.destination_routing_number = randint(0, 999999999)
+    ach_file.destination_routing_number = randint(111111111, 999999999)
     ach_file.entry_class_code = get_sentence()
     ach_file.entry_description = get_sentence()
     ach_file.header_discretionary_data = get_sentence()
     ach_file.originRoutingNumber = get_sentence()
     ach_file.origin_name = get_sentence()
     ach_file.reference_code = get_sentence()
-    ach_file.originRoutingNumber = randint(0, 999999999)
+    ach_file.originRoutingNumber = randint(111111111, 999999999)
 
     def test_file_header(self):
         self.ach_file.create_header()
@@ -36,7 +36,7 @@ class TestACHRecord(unittest.TestCase):
         self.assertEqual(file_header[39:40], '1')
 
     def test_batch_header(self):
-        self.ach_file.new_batch(randint(0, 999999999), get_sentence())
+        self.ach_file.new_batch(randint(111111111, 999999999), get_sentence())
         test_batch = self.ach_file.batch_records[-1].generate()
         self.assertEqual(len(test_batch), 95)
         self.assertEqual(test_batch[:1], '5')
@@ -45,8 +45,9 @@ class TestACHRecord(unittest.TestCase):
 
     def test_entry_record_without_addenda(self):
         self.ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
-                                                  randint(0, 999999999), randint(0, 999999999),
-                                                  randint(0, 999999999), randint(0, 999999999), get_sentence())
+                                                  randint(111111111, 999999999), randint(111111111, 999999999),
+                                                  randint(111111111, 999999999), randint(111111111, 999999999),
+                                                  get_sentence())
         test_entry_record = self.ach_file.batch_records[-1].entry_records[-1]
         test_entry = test_entry_record.generate()
         self.assertEqual(len(test_entry), 95)
@@ -54,8 +55,8 @@ class TestACHRecord(unittest.TestCase):
 
     def test_entry_record_with_addenda(self):
         self.ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
-                                                  randint(0, 999999999), randint(0, 999999999),
-                                                  randint(0, 999999999), get_sentence(), get_sentence())
+                                                  randint(111111111, 999999999), randint(111111111, 999999999),
+                                                  randint(111111111, 999999999), get_sentence(), get_sentence())
         entry_record = self.ach_file.batch_records[-1].entry_records[-1]
         entry_record.add_addenda('test', ACHRecordTypes.CCD)
         addenda_record = entry_record.addenda_records[-1]
@@ -68,13 +69,13 @@ class TestAchSave(unittest.TestCase):
     save_ach_file = ACHRecordTypes.ACHFile()
     save_ach_file.batch_name = get_sentence()
     save_ach_file.destination_name = get_sentence()
-    save_ach_file.destination_routing_number = randint(0, 999999999)
+    save_ach_file.destination_routing_number = randint(111111111, 999999999)
     save_ach_file.entry_class_code = get_sentence()
     save_ach_file.entry_description = get_sentence()
     save_ach_file.header_discretionary_data = get_sentence()
     save_ach_file.origin_name = get_sentence()
     save_ach_file.reference_code = get_sentence()
-    save_ach_file.originRoutingNumber = randint(0, 999999999)
+    save_ach_file.originRoutingNumber = randint(111111111, 999999999)
     test_batch_control = ''
     test_file_control = ''
     file_control = ''
@@ -84,8 +85,9 @@ class TestAchSave(unittest.TestCase):
     save_ach_file.new_batch(get_sentence(), get_sentence())
     for x in range(0, 10):
         save_ach_file.batch_records[-1].add_entry(ACHRecordTypes.CHECK_DEPOSIT,
-                                                  randint(0, 999999999), randint(0, 999999999),
-                                                  randint(0, 999999999), randint(0, 999999999), get_sentence())
+                                                  randint(111111111, 999999999), randint(111111111, 999999999),
+                                                  randint(111111111, 999999999), randint(111111111, 999999999),
+                                                  get_sentence())
         save_ach_file.batch_records[-1].entry_records[-1].add_addenda(get_sentence(), ACHRecordTypes.CCD)
     save_ach_file.save(output_file_path)
 
