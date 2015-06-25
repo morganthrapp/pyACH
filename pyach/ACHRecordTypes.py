@@ -71,6 +71,21 @@ def validate_field(field, length, justify=None, to_alphanumeric=True):
     elif len(field) < length:
         return field[:length]
 
+def check_digit(routing_number):
+    """Implement NACHA's check digit algorithm"""
+    routing_number_list = list(str(routing_number))
+    routing_number_sum = 0
+    routing_number_sum += (int(routing_number_list[0]) * 3)
+    routing_number_sum += (int(routing_number_list[1]) * 7)
+    routing_number_sum += (int(routing_number_list[2]))
+    routing_number_sum += (int(routing_number_list[3]) * 3)
+    routing_number_sum += (int(routing_number_list[4]) * 7)
+    routing_number_sum += (int(routing_number_list[5]))
+    routing_number_sum += (int(routing_number_list[6]) * 3)
+    routing_number_sum += (int(routing_number_list[7]) * 7)
+    check_digit = 10 - (routing_number_sum % 10)
+    return str(check_digit)
+
 
 class FileHeader:
     _record_type = '1'  # ACH Header records are type 1
