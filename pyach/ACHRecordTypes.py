@@ -183,9 +183,11 @@ class Batch:
     def add_entry(self, transaction_code, routing_number, account_number,
                   amount, identification_number, receiver_name,
                   discretionary_data=''):
+                  amount, identification_number, receiver_name, discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number,
                        amount, identification_number, receiver_name,
                        discretionary_data, self._originator_dfi_identification)
+                       amount, identification_number, receiver_name, discretionary_data)
         self.entry_records.append(_entry)
 
     def finalize(self, company_name, discretionary_data, entry_class_code,
@@ -289,6 +291,7 @@ class BatchHeader:
         _entry = Entry(transaction_code, routing_number, account_number,
                        amount, identification_number, receiver_name,
                        discretionary_data, self._originator_dfi_identification)
+                       discretionary_data)
         self.entry_records.append(_entry)
 
 
@@ -346,38 +349,30 @@ class Entry:
     def __init__(self, transaction_code, routing_number, account_number,
                  amount, identification_number, receiver_name,
                  discretionary_data, trace_number):
+                 discretionary_data):
         self._transaction_code = str(transaction_code)
-        self._routing_number = routing_number
+
+        # If the routing number that gets passed in doesn't have the check digit in it, calculate it.
+        routing_number = str(routing_number)
+        if len(routing_number) == 9:
+            self._routing_number = routing_number
+        elif len(routing_number) == 8:
+            self._routing_number = routing_number + check_digit(routing_number)
+
         self._account_number = str(account_number)
         self._amount = amount
         self._identification_number = str(identification_number)
         self._receiver_name = str(receiver_name)
         self._discretionary_data = str(discretionary_data)
-        self._trace_number = str(trace_number)
         self._addenda_count = 0
         self.entry_record = ''
         self.addenda_records = []
         self._has_addenda = '0'
-        self._entry_number += 1
+        Entry._entry_number += 1
+        self._local_entry_number = Entry._entry_number
 
     def _get_trace_number(self):
-        trace_number = '{0}{1}'.format(self._routing_number, str(self._entry_number).rjust(6, '0'))
-        return trace_number
-
-    def _check_digit(self):
-        """Implement NACHA's check digit algorithm"""
-        routing_number_list = list(str(self._routing_number))
-        routing_number_sum = 0
-        routing_number_sum += (int(routing_number_list[0]) * 3)
-        routing_number_sum += (int(routing_number_list[1]) * 7)
-        routing_number_sum += (int(routing_number_list[2]))
-        routing_number_sum += (int(routing_number_list[3]) * 3)
-        routing_number_sum += (int(routing_number_list[4]) * 7)
-        routing_number_sum += (int(routing_number_list[5]))
-        routing_number_sum += (int(routing_number_list[6]) * 3)
-        routing_number_sum += (int(routing_number_list[7]) * 7)
-        check_digit = 10 - (routing_number_sum % 10)
-        return str(check_digit)
+        return '{0}{1}'.format(self._routing_number, str(self._local_entry_number).rjust(6, '0'))
 
     def generate(self):
         self.entry_record += validate_field(self._record_type, ENTRY_LENGTHS['RECORD TYPE CODE'])
@@ -388,7 +383,7 @@ class Entry:
                                             SHIFT_RIGHT_ADD_ZERO, True)
         self.entry_record += validate_field(self._identification_number, ENTRY_LENGTHS['INDIVIDUAL IDENTIFICATION'],
                                             SHIFT_LEFT)
-        self.entry_record += validate_field(self._receiver_name, ENTRY_LENGTHS['INDIVIDUAL NAME'], SHIFT_LEFT)
+        self.entry_record += validate_field(self._receiver_name, ENTRY_LENGTHS['INDIVIDUAL NAME'], SHIFT_LEFT, False)
         self.entry_record += validate_field(self._discretionary_data, ENTRY_LENGTHS['DISCRETIONARY DATA'], SHIFT_LEFT)
         self.entry_record += validate_field(self._has_addenda, ENTRY_LENGTHS['ADDENDA'], SHIFT_LEFT)
         self.entry_record += validate_field(self._get_trace_number(), ENTRY_LENGTHS['TRACE NUMBER'], SHIFT_LEFT)
@@ -396,7 +391,7 @@ class Entry:
         return self.entry_record[:95]
 
     def add_addenda(self, main_detail, type_code):
-        _entry_record_id = str(self._trace_number)
+        _entry_record_id = str(self._get_trace_number())
         _addenda_record = Addenda(main_detail, type_code, _entry_record_id)
         self.addenda_records.append(_addenda_record)
         self._has_addenda = '1'
@@ -418,7 +413,8 @@ class Addenda:
         self.addenda_record += validate_field(self._type_code, ADDENDA_LENGTHS['TYPE CODE'], SHIFT_LEFT)
         self.addenda_record += validate_field(self._main_detail, ADDENDA_LENGTHS['MAIN DETAIL'],
                                               SHIFT_LEFT, to_alphanumeric=False)
-        self.addenda_record += validate_field(str(self._addenda_sequence), ADDENDA_LENGTHS['SEQUENCE'], SHIFT_LEFT)
+        self.addenda_record += validate_field(str(self._addenda_sequence), ADDENDA_LENGTHS['SEQUENCE'],
+                                              SHIFT_RIGHT_ADD_ZERO)
         self.addenda_record += validate_field(self._entry_record_id, ADDENDA_LENGTHS['ENTRY RECORD ID'], SHIFT_LEFT)
         self.addenda_record += '\n'
         self._addenda_sequence += 1
