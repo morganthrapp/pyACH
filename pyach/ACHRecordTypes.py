@@ -181,12 +181,8 @@ class Batch:
         self.entry_records = []
 
     def add_entry(self, transaction_code, routing_number, account_number,
-                  amount, identification_number, receiver_name,
-                  discretionary_data=''):
                   amount, identification_number, receiver_name, discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number,
-                       amount, identification_number, receiver_name,
-                       discretionary_data, self._originator_dfi_identification)
                        amount, identification_number, receiver_name, discretionary_data)
         self.entry_records.append(_entry)
 
@@ -290,7 +286,6 @@ class BatchHeader:
                   amount, identification_number, receiver_name, discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number,
                        amount, identification_number, receiver_name,
-                       discretionary_data, self._originator_dfi_identification)
                        discretionary_data)
         self.entry_records.append(_entry)
 
@@ -348,7 +343,6 @@ class Entry:
 
     def __init__(self, transaction_code, routing_number, account_number,
                  amount, identification_number, receiver_name,
-                 discretionary_data, trace_number):
                  discretionary_data):
         self._transaction_code = str(transaction_code)
 
