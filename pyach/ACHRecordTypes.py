@@ -8,10 +8,13 @@ from pyach.field_lengths import FILE_HEADER_LENGTHS, FILE_CONTROL_LENGTHS, BATCH
 
 
 # Datetime formats
-today_with_format = datetime.date.today().strftime('%y%m%d')
+day_format_string = r'%y%m%d'
+today_with_format = datetime.date.today().strftime(day_format_string)
 now_with_format = datetime.datetime.now().time().strftime('%H%M')
-yesterday = datetime.datetime.now() - datetime.timedelta(1)
-yesterday_with_format = yesterday.strftime('%y%m%d')
+yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+yesterday_with_format = yesterday.strftime(day_format_string)
+tomorrow = datetime.datetime.today() + datetime.timedelta(days=1)
+tomorrow_with_format = tomorrow.strftime(day_format_string)
 
 
 # Service class codes:
@@ -217,7 +220,7 @@ class BatchHeader:
                  company_identification_number,
                  entry_class_code, entry_description, dfi_number, batch_number,
                  service_class=MIXED, description_date=today_with_format,
-                 effective_entry_date=today_with_format):
+                 effective_entry_date=tomorrow_with_format):
         self._company_name = str(company_name)
         self._discretionary_data = str(discretionary_data)
         self._company_identification_number = str(company_identification_number)
