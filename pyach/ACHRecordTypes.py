@@ -183,7 +183,8 @@ class Batch:
     def add_entry(self, transaction_code, routing_number, account_number,
                   amount, identification_number, receiver_name, discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number,
-                       amount, identification_number, receiver_name, discretionary_data)
+                       amount, identification_number, receiver_name, discretionary_data,
+                       self._originator_dfi_identification)
         self.entry_records.append(_entry)
 
     def finalize(self, company_name, discretionary_data, entry_class_code,
@@ -286,7 +287,7 @@ class BatchHeader:
                   amount, identification_number, receiver_name, discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number,
                        amount, identification_number, receiver_name,
-                       discretionary_data)
+                       discretionary_data, self._originator_dfi_identification)
         self.entry_records.append(_entry)
 
 
@@ -343,7 +344,7 @@ class Entry:
 
     def __init__(self, transaction_code, routing_number, account_number,
                  amount, identification_number, receiver_name,
-                 discretionary_data):
+                 discretionary_data, originating_dfi_identification):
         self._transaction_code = str(transaction_code)
 
         # If the routing number that gets passed in doesn't have the check digit in it, calculate it.
@@ -358,6 +359,7 @@ class Entry:
         self._identification_number = str(identification_number)
         self._receiver_name = str(receiver_name)
         self._discretionary_data = str(discretionary_data)
+        self._originating_dfi_identification = originating_dfi_identification
         self._addenda_count = 0
         self.entry_record = ''
         self.addenda_records = []
@@ -366,7 +368,7 @@ class Entry:
         self._local_entry_number = Entry._entry_number
 
     def _get_trace_number(self):
-        return '{0}{1}'.format(self._routing_number, str(self._local_entry_number).rjust(6, '0'))
+        return '{0}{1}'.format(self._originating_dfi_identification, str(self._local_entry_number).rjust(6, '0'))
 
     def generate(self):
         self.entry_record += validate_field(self._record_type, ENTRY_LENGTHS['RECORD TYPE CODE'])
