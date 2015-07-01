@@ -371,7 +371,9 @@ class Entry:
         self._local_entry_number = Entry._entry_number
 
     def _get_trace_number(self):
-        return '{0}{1}'.format(self._originating_dfi_identification, str(self._local_entry_number).rjust(6, '0'))
+        entry_padding = ENTRY_LENGTHS['TRACE NUMBER'] - len(self._originating_dfi_identification)
+        return '{0}{1}'.format(self._originating_dfi_identification,
+                               str(self._local_entry_number).rjust(entry_padding, '0'))
 
     def generate(self):
         self.entry_record += validate_field(self._record_type, ENTRY_LENGTHS['RECORD TYPE CODE'])
@@ -390,7 +392,7 @@ class Entry:
         return self.entry_record[:95]
 
     def add_addenda(self, main_detail, type_code):
-        _entry_record_id = str(self._get_trace_number())
+        _entry_record_id = str(self._get_trace_number()[-7])
         _addenda_record = Addenda(main_detail, type_code, _entry_record_id)
         self.addenda_records.append(_addenda_record)
         self._has_addenda = '1'
@@ -519,3 +521,5 @@ class ACHFile(object):
                 line = '\n'.ljust(95, '9')
                 for x in range(0, footer_lines):
                     ach_file.write(line)
+
+        Entry._entry_number = 0  # Reset the entry count for each file
