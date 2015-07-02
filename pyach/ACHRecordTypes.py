@@ -74,6 +74,7 @@ def validate_field(field, length, justify=None, to_alphanumeric=True):
     elif len(field) < length:
         return field[:length]
 
+
 def check_digit(routing_number):
     """Implement NACHA's check digit algorithm"""
     routing_number_list = list(str(routing_number))
@@ -318,7 +319,7 @@ class BatchControl:
                                                     SHIFT_LEFT)
         self.batch_control_record += validate_field(self._entry_count, BATCH_CONTROL_LENGTHS['DETAIL COUNT'],
                                                     SHIFT_RIGHT_ADD_ZERO)
-        self.batch_control_record += validate_field(str(self._entry_hash), BATCH_CONTROL_LENGTHS['ENTRY HASH'], 
+        self.batch_control_record += validate_field(str(self._entry_hash), BATCH_CONTROL_LENGTHS['ENTRY HASH'],
                                                     SHIFT_RIGHT_ADD_ZERO)
         self.batch_control_record += validate_field(str(self._total_debit_amount),
                                                     BATCH_CONTROL_LENGTHS['TOTAL DEBIT AMOUNT'],
