@@ -15,7 +15,7 @@ yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
 yesterday_with_format = yesterday.strftime(day_format_string)
 tomorrow = datetime.datetime.today() + datetime.timedelta(days=1)
 tomorrow_with_format = tomorrow.strftime(day_format_string)
-
+WEEKEND = [6, 7]
 
 # Service class codes:
 MIXED = '200'
@@ -221,7 +221,7 @@ class BatchHeader:
                  company_identification_number,
                  entry_class_code, entry_description, dfi_number, batch_number,
                  service_class=MIXED, description_date=today_with_format,
-                 effective_entry_date=tomorrow_with_format):
+                 effective_entry_delay=1):
         self._company_name = str(company_name)
         self._discretionary_data = str(discretionary_data)
         self._company_identification_number = str(company_identification_number)
@@ -229,7 +229,7 @@ class BatchHeader:
         self._service_class = str(service_class)
         self._entry_description = str(entry_description)
         self._descriptive_date = str(description_date)
-        self._effective_entry_date = str(effective_entry_date)
+        self._effective_entry_date = self._get_effective_entry_date(effective_entry_delay)
         self._originator_dfi_identification = str(dfi_number)
         self._batch_number = str(batch_number)
         self._batch_control_record = ''
@@ -239,6 +239,15 @@ class BatchHeader:
         self._total_credit_amount = 0
         self._entry_hash = 0
         self.batch_header_record = ''
+
+    @staticmethod
+    def _get_effective_entry_date(effective_entry_date):
+        _date = datetime.datetime.today()
+        _date += datetime.timedelta(days=effective_entry_date)
+        while _date.isoweekday() not in WEEKEND:
+            _date += datetime.timedelta(days=1)
+        return _date.strftime(day_format_string)
+
 
     def generate(self):
         self.batch_header_record += validate_field(self._record_type, BATCH_HEADER_LENGTHS['RECORD TYPE CODE'])
