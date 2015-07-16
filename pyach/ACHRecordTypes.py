@@ -2,6 +2,8 @@ __author__ = 'Morgan Thrapp'
 
 import datetime
 import re
+from os import makedirs
+from os.path import splitext
 
 from pyach.field_lengths import FILE_HEADER_LENGTHS, FILE_CONTROL_LENGTHS, BATCH_HEADER_LENGTHS, \
     BATCH_CONTROL_LENGTHS, ENTRY_LENGTHS, ADDENDA_LENGTHS
@@ -89,6 +91,15 @@ def check_digit(routing_number):
     routing_number_sum += (int(routing_number_list[7]) * 7)
     check_digit = 10 - (routing_number_sum % 10)
     return str(check_digit)
+
+
+class IDStore:
+    def __init__(self):
+        self.id = 0
+
+    def get_id(self):
+        self.id += 1
+        return self.id
 
 
 class FileHeader:
@@ -219,7 +230,7 @@ class BatchHeader:
 
     def __init__(self, company_name, discretionary_data,
                  company_identification_number,
-                 entry_class_code, entry_description, dfi_number, batch_number,
+                 entry_class_code, entry_description, dfi_number, batch_number, id_store,
                  service_class=MIXED, description_date=today_with_format,
                  effective_entry_delay=1):
         self._company_name = str(company_name)
@@ -239,6 +250,7 @@ class BatchHeader:
         self._total_credit_amount = 0
         self._entry_hash = 0
         self.batch_header_record = ''
+        self._id_store = id_store
 
     @staticmethod
     def _get_effective_entry_date(effective_entry_date):
@@ -300,7 +312,7 @@ class BatchHeader:
                   amount, identification_number, receiver_name, discretionary_data=''):
         _entry = Entry(transaction_code, routing_number, account_number,
                        amount, identification_number, receiver_name,
-                       discretionary_data, self._originator_dfi_identification)
+                       discretionary_data, self._originator_dfi_identification, self._id_store.get_id())
         self.entry_records.append(_entry)
 
 
@@ -351,13 +363,12 @@ class BatchControl:
 
 
 class Entry:
-    _entry_number = 0
     # The following values are printed:
     _record_type = '6'  # Entry Detail record type is 6.
 
     def __init__(self, transaction_code, routing_number, account_number,
                  amount, identification_number, receiver_name,
-                 discretionary_data, originating_dfi_identification):
+                 discretionary_data, originating_dfi_identification, entry_number):
         self._transaction_code = str(transaction_code)
 
         # If the routing number that gets passed in doesn't have the check digit in it, calculate it.
@@ -377,8 +388,7 @@ class Entry:
         self.entry_record = ''
         self.addenda_records = []
         self._has_addenda = '0'
-        Entry._entry_number += 1
-        self._local_entry_number = Entry._entry_number
+        self._local_entry_number = entry_number
 
     def _get_trace_number(self):
         entry_padding = ENTRY_LENGTHS['TRACE NUMBER'] - len(self._originating_dfi_identification)
@@ -402,7 +412,7 @@ class Entry:
         return self.entry_record[:95]
 
     def add_addenda(self, main_detail, type_code):
-        _entry_record_id = str(self._get_trace_number()[-7])
+        _entry_record_id = str(self._local_entry_number).rjust(7, '0')
         _addenda_record = Addenda(main_detail, type_code, _entry_record_id)
         self.addenda_records.append(_addenda_record)
         self._has_addenda = '1'
@@ -457,6 +467,7 @@ class ACHFile(object):
         self.company_identification_number = ''
         self.footer_lines = 0
         self.origin_id = ''
+        self.id_store = IDStore()
 
     def create_header(self):
         self._file_header = FileHeader(self.destination_routing_number,
@@ -479,8 +490,8 @@ class ACHFile(object):
         new_batch = BatchHeader(batch_name, discretionary_data,
                                 company_identification_number,
                                 entry_class_code, entry_description,
-                                dfi_number, self._batch_number, service_class,
-                                self.descriptive_date)
+                                dfi_number, self._batch_number, self.id_store,
+                                description_date=self.descriptive_date, service_class=service_class)
         self.batch_records.append(new_batch)
 
     def append_batch(self, batch):
@@ -510,6 +521,7 @@ class ACHFile(object):
         self._file_control_record = FileControl(self._batch_count, block_count,
                                                 self._entry_count, self._entry_hash,
                                                 self._total_debit_amount, self._total_credit_amount)
+
         with open(file_path, 'w+') as ach_file:
             file_header = self._file_header.generate()
             ach_file.write(file_header)
