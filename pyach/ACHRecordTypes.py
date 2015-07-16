@@ -65,7 +65,7 @@ is_alphanumeric = re.compile('[\W_]+')
 def validate_field(field, length, justify=None, to_alphanumeric=True):
     if to_alphanumeric:
         field = is_alphanumeric.sub('', field)
-    if len(field.strip()) == 0:
+    if not field.strip():
         return ' ' * length
     elif len(field) == length:
         return field
