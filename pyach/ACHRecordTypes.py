@@ -479,7 +479,7 @@ class ACHFile(object):
     def new_batch(self, dfi_number, batch_name, entry_description=None,
                   company_identification_number=None,
                   entry_class_code=None, discretionary_data='',
-                  service_class=MIXED):
+                  service_class=MIXED, effective_entry_delay=1):
         if entry_description is None:
             entry_description = self.entry_description
         if company_identification_number is None:
@@ -491,7 +491,8 @@ class ACHFile(object):
                                 company_identification_number,
                                 entry_class_code, entry_description,
                                 dfi_number, self._batch_number, self.id_store,
-                                description_date=self.descriptive_date, service_class=service_class)
+                                description_date=self.descriptive_date, service_class=service_class,
+                                effective_entry_delay=effective_entry_delay)
         self.batch_records.append(new_batch)
 
     def append_batch(self, batch):
