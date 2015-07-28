@@ -256,7 +256,7 @@ class BatchHeader:
     def _get_effective_entry_date(effective_entry_date):
         _date = datetime.datetime.today()
         _date += datetime.timedelta(days=effective_entry_date)
-        while _date.isoweekday() not in WEEKEND:
+        while _date.isoweekday() in WEEKEND:
             _date += datetime.timedelta(days=1)
         return _date.strftime(day_format_string)
 
