@@ -3,7 +3,7 @@ __author__ = 'Morgan Thrapp'
 import datetime
 import re
 from os import makedirs
-from os.path import splitext
+from os.path import split
 
 from pyach.field_lengths import FILE_HEADER_LENGTHS, FILE_CONTROL_LENGTHS, BATCH_HEADER_LENGTHS, \
     BATCH_CONTROL_LENGTHS, ENTRY_LENGTHS, ADDENDA_LENGTHS
@@ -259,7 +259,6 @@ class BatchHeader:
         while _date.isoweekday() in WEEKEND:
             _date += datetime.timedelta(days=1)
         return _date.strftime(day_format_string)
-
 
     def generate(self):
         self.batch_header_record += validate_field(self._record_type, BATCH_HEADER_LENGTHS['RECORD TYPE CODE'])
@@ -522,6 +521,10 @@ class ACHFile(object):
         self._file_control_record = FileControl(self._batch_count, block_count,
                                                 self._entry_count, self._entry_hash,
                                                 self._total_debit_amount, self._total_credit_amount)
+        try:
+            makedirs(split(file_path)[0])
+        except FileExistsError:
+            pass  # If the folder exists, don't try to create it.
 
         with open(file_path, 'w+') as ach_file:
             file_header = self._file_header.generate()
