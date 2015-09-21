@@ -1,10 +1,8 @@
-__author__ = 'Morgan Thrapp'
-
 import datetime
 import re
 from os import makedirs
 from os.path import split
-
+from workalendar.usa import NewYork
 from pyach.field_lengths import FILE_HEADER_LENGTHS, FILE_CONTROL_LENGTHS, BATCH_HEADER_LENGTHS, \
     BATCH_CONTROL_LENGTHS, ENTRY_LENGTHS, ADDENDA_LENGTHS
 
@@ -18,6 +16,8 @@ yesterday_with_format = yesterday.strftime(day_format_string)
 tomorrow = datetime.datetime.today() + datetime.timedelta(days=1)
 tomorrow_with_format = tomorrow.strftime(day_format_string)
 WEEKEND = [6, 7]
+new_york = NewYork()
+HOLIDAYS = [holiday[0] for holiday in new_york.holidays()]
 
 # Service class codes:
 MIXED = '200'
@@ -91,6 +91,19 @@ def check_digit(routing_number):
     routing_number_sum += (int(routing_number_list[7]) * 7)
     check_digit = 10 - (routing_number_sum % 10)
     return str(check_digit)
+
+
+def get_effective_entry_date(effective_entry_date, as_date=False):
+    if effective_entry_date <= 0:
+        effective_entry_date = 1
+    _date = datetime.datetime.today()
+    while (_date.isoweekday() in WEEKEND) and (_date in HOLIDAYS):
+        _date += datetime.timedelta(days=1)
+    _date += datetime.timedelta(days=effective_entry_date)
+    if as_date:
+        return _date
+    else:
+        return _date.strftime(day_format_string)
 
 
 class IDStore:
@@ -240,7 +253,7 @@ class BatchHeader:
         self._service_class = str(service_class)
         self._entry_description = str(entry_description)
         self._descriptive_date = str(description_date)
-        self._effective_entry_date = self._get_effective_entry_date(effective_entry_delay)
+        self._effective_entry_date = get_effective_entry_date(effective_entry_delay)
         self._originator_dfi_identification = str(dfi_number)
         self._batch_number = str(batch_number)
         self._batch_control_record = ''
@@ -251,14 +264,6 @@ class BatchHeader:
         self._entry_hash = 0
         self.batch_header_record = ''
         self._id_store = id_store
-
-    @staticmethod
-    def _get_effective_entry_date(effective_entry_date):
-        _date = datetime.datetime.today()
-        _date += datetime.timedelta(days=effective_entry_date)
-        while _date.isoweekday() in WEEKEND:
-            _date += datetime.timedelta(days=1)
-        return _date.strftime(day_format_string)
 
     def generate(self):
         self.batch_header_record += validate_field(self._record_type, BATCH_HEADER_LENGTHS['RECORD TYPE CODE'])
@@ -467,6 +472,7 @@ class ACHFile(object):
         self.footer_lines = 0
         self.origin_id = ''
         self.id_store = IDStore()
+        self.company_account_number = ''
 
     def create_header(self):
         self._file_header = FileHeader(self.destination_routing_number,
@@ -504,8 +510,6 @@ class ACHFile(object):
         self._total_debit_amount = 0
         self._total_credit_amount = 0
         entry_hash = 0
-        footer_lines = 0
-        block_count = 0
         line_count = 0
         for batch in self.batch_records:
             batch.finalize()
