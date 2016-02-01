@@ -96,10 +96,11 @@ def check_digit(routing_number):
 def get_effective_entry_date(effective_entry_date, as_date=False):
     if effective_entry_date <= 0:
         effective_entry_date = 1
-    _date = datetime.datetime.today()
-    while (_date.isoweekday() in WEEKEND) and (_date in HOLIDAYS):
+    _date = datetime.datetime.today() + datetime.timedelta(days=1)
+    for _ in range(effective_entry_date):
         _date += datetime.timedelta(days=1)
-    _date += datetime.timedelta(days=effective_entry_date)
+        while (_date.isoweekday() in WEEKEND) or (_date in HOLIDAYS):
+            _date += datetime.timedelta(days=1)
     if as_date:
         return _date
     else:
