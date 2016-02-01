@@ -384,7 +384,7 @@ class Entry:
             self._routing_number = routing_number + check_digit(routing_number)
 
         self._account_number = str(account_number)
-        self._amount = amount
+        self.amount = amount
         self._identification_number = str(identification_number)
         self._receiver_name = str(receiver_name)
         self._discretionary_data = str(discretionary_data)
@@ -405,7 +405,7 @@ class Entry:
         self.entry_record += validate_field(self._transaction_code, ENTRY_LENGTHS['TRANSACTION CODE'], SHIFT_LEFT)
         self.entry_record += validate_field(str(self._routing_number), ENTRY_LENGTHS['RECEIVING DFI ID'], SHIFT_LEFT)
         self.entry_record += validate_field(self._account_number, ENTRY_LENGTHS['DFI ACCOUNT NUMBER'], SHIFT_LEFT)
-        self.entry_record += validate_field(str(self._amount), ENTRY_LENGTHS['DOLLAR AMOUNT'],
+        self.entry_record += validate_field(str(self.amount), ENTRY_LENGTHS['DOLLAR AMOUNT'],
                                             SHIFT_RIGHT_ADD_ZERO, True)
         self.entry_record += validate_field(self._identification_number, ENTRY_LENGTHS['INDIVIDUAL IDENTIFICATION'],
                                             SHIFT_LEFT)
@@ -458,7 +458,7 @@ class ACHFile(object):
         self._total_debit_amount = 0
         self._total_credit_amount = 0
         self._entry_date = today_with_format
-        self._file_header = ''
+        self._file_header = None
         self._file_control_record = ''
         self.batch_records = []
         self.destination_name = ''
