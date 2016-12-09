@@ -1,6 +1,3 @@
-__author__ = 'Morgan Thrapp'
-
-
 FILE_HEADER_LENGTHS = {'RECORD TYPE CODE': 1,
                        'PRIORITY CODE': 2,
                        'IMMEDIATE DESTINATION': 10,
