@@ -8,5 +8,6 @@ setup(
     license='MIT',
     author='Morgan Thrapp',
     author_email='mpthrapp@gmail.com',
-    description='A package to create NACHA files with Python.'
+    description='A package to create NACHA files with Python.',
+    requires=['holidays']
 )
