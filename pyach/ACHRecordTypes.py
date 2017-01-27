@@ -238,7 +238,7 @@ class BatchHeader:
 
     @property
     def entry_hash(self):
-        return sum(int(str(entry.routing_number)[:8]) for entry in self.entry_records)
+        return sum(int(str(entry.routing_number)[:8]) for entry in self.entry_records if str(entry.routing_number))
 
     @property
     def entry_count(self):
