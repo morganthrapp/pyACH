@@ -8,22 +8,22 @@ Todo:
   1. Add JSON parsing.
   2. Support for concurrent batch adding.
   
-#Documentation  
+# Documentation  
 
 
-##How to use:
-###1. Create a new file:
+## How to use:
+### 1. Create a new file:
     payment_file = ACHFile()
 	
-###2. Add data to the file:
-####2.1 File Header:
+### 2. Add data to the file:
+#### 2.1 File Header:
 	payment_file.destination_routing_number = '01234567'
 	payment_file.origin_id = '76543210'
 	payment_file.destination_name = 'BANK NAME'
 	payment_file.origin_name = 'COMPANY NAME'
 	payment_file.reference_code = 'SERVICE' # Optional 8 character field
 	payment_file.create_header()
-####2.2 Batch Header:
+#### 2.2 Batch Header:
 	payment_file.batch_name = 'SUBCOMPANY NAME' 
 	# This should be the same as .origin_name unless you have multiple company records being sent in one file.
 	payment_file.entry_description = 'WATER BILL' # Optional 10 character field
@@ -31,7 +31,7 @@ Todo:
 	payment_file.entry_class_code = 'WEB'
 	payment_file.service_class_code = ACHRecordTypes.MIXED
 	payment_file.add_batch(dfi_number)
-####2.3 Entry Record:
+#### 2.3 Entry Record:
 	transaction_code = ACHRecordTypes.CHECK_DEBIT
 	payment_type_code = ACHRecordTypes.SINGLE_ENTRY
 	payment_file.batch_records[-1].add_entry(transaction_code, payor_routing_number, payor_account_number,
@@ -44,11 +44,11 @@ Todo:
 	payment_file.batch_records[-1].entry_records[-1].add_addenda(addenda_type, "Here's some additional information about the transaction")
 	# Addenda records are optional.
 																  		
-###3. Save it:
+### 3. Save it:
 	payment_file.save(path_to_save)
 	
   
-##Concurrency
+## Concurrency
 If you're processing a lot of payments you may find that it's faster to generate 
 multiple batches at once and append them to an ACH file once the batches are complete.  
 You can do this by generating Batch objects as such:
