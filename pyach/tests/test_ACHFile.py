@@ -30,7 +30,7 @@ COMPANY_IDENTIFICATION_NUMBER = '1232789456'
 TODAY = '160517'
 EFFECTIVE_ENTRY_DATE = '160621'
 NOW = '1108'
-DESTINATION_NAME = 'TheIronBankOfBravos'
+DESTINATION_NAME = 'TheIronBankOfBraavos'
 ORIGIN_NAME = 'AryaStark'
 REFERENCE_CODE = 'ETOOREAL'
 DISCRETIONARY_DATA = 'Valar Morghulis'
@@ -38,6 +38,7 @@ ENTRY_CLASS_CODE = 'PPD'
 ENTRY_DESCRIPTION = 'TestPay'
 INDIVIDUAL_IDENTIFICATION_NUMBER = '675849302123'
 RECEIVER_NAME = "jaqen h'ghar"
+CORRECTED_RECEIVER_NAME = 'jaqenhghar'
 ENTRY_HASH = '0123456780'
 
 
@@ -109,7 +110,7 @@ class TestACHRecord:
         eq(test_entry[12:29].strip(), ACCOUNT_NUMBER)
         eq(test_entry[29:39], FILE_AMOUNT)
         eq(test_entry[39:54].strip(), COMPANY_IDENTIFICATION_NUMBER)
-        eq(test_entry[54:76].strip(), RECEIVER_NAME)
+        eq(test_entry[54:76].strip(), CORRECTED_RECEIVER_NAME)
         eq(test_entry[76:78], '  ')
         eq(test_entry[78], '0')
         eq(test_entry[79:94], DFI_NUMBER + '0000001')
@@ -251,7 +252,7 @@ class TestAchSave:
             eq(entry_record[12:29].strip(), ACCOUNT_NUMBER)
             eq(entry_record[29:39].lstrip('0'), amount)
             eq(entry_record[39:54].strip(), INDIVIDUAL_IDENTIFICATION_NUMBER)
-            eq(entry_record[54:76].strip(), RECEIVER_NAME)
+            eq(entry_record[54:76].strip(), CORRECTED_RECEIVER_NAME)
             eq(entry_record[76:78], '  ')
             eq(int(entry_record[78]), entry_class_code == pyach.ACHRecordTypes.CHECK_DEPOSIT)
             eq(entry_record[79:94], DFI_NUMBER + str(index).rjust(7, '0'))

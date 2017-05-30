@@ -405,7 +405,7 @@ class Entry:
                                             field_lengths.ENTRY_LENGTHS['INDIVIDUAL IDENTIFICATION'],
                                             SHIFT_LEFT)
         self.entry_record += validate_field(self._receiver_name, field_lengths.ENTRY_LENGTHS['INDIVIDUAL NAME'],
-                                            SHIFT_LEFT, False)
+                                            SHIFT_LEFT)
         self.entry_record += validate_field(self._discretionary_data, field_lengths.ENTRY_LENGTHS['DISCRETIONARY DATA'],
                                             SHIFT_LEFT)
         self.entry_record += validate_field(self.has_addenda, field_lengths.ENTRY_LENGTHS['ADDENDA'], SHIFT_LEFT)
